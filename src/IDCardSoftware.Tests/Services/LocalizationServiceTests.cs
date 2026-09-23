@@ -31,17 +31,21 @@ namespace IDCardSoftware.Tests.Services
         public void GetString_DefaultLanguage_ReturnsEnglishText()
         {
             ILocalizationService service = new LocalizationService();
-            Assert.AreEqual("ID Card Software", service.GetString("App.Title"));
+            Assert.AreEqual("ID Stack", service.GetString("App.Title"));
         }
 
         [TestMethod]
         public void SetLanguage_Hindi_UpdatesCurrentLanguageAndStrings()
         {
+            // App.Title is the untranslated brand name; capture English first because
+            // SetLanguage switches the process UI culture, then verify a translated key changes.
+            var englishMenuFile = new LocalizationService().GetString("Menu.File");
+
             var service = new LocalizationService();
             service.SetLanguage("hi-IN");
 
             Assert.AreEqual("hi-IN", service.CurrentLanguage);
-            Assert.AreNotEqual("ID Card Software", service.GetString("App.Title"));
+            Assert.AreNotEqual(englishMenuFile, service.GetString("Menu.File"));
         }
 
         [TestMethod]

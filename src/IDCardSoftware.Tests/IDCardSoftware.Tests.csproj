@@ -9,7 +9,7 @@
     <AssemblyName>IDCardSoftware.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Authors>theprabir</Authors>
+    <Authors>Prabir kumar Das</Authors>
   </PropertyGroup>
 
   <ItemGroup>

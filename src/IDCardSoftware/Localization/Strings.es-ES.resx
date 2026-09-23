@@ -70,7 +70,7 @@
     <value>Biblioteca de Plantillas</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>Software de Tarjetas de Identificación</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>Ayuda</value>
@@ -85,7 +85,7 @@
     <value>Ver</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>Bienvenido al Software de Tarjetas de Identificación</value>
+    <value>Bienvenido al ID Stack</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>Editor de Plantillas</value>

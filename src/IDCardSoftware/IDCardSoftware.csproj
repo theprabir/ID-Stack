@@ -11,8 +11,8 @@
     <AssemblyName>IDCardSoftware</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Version>0.1.0</Version>
-    <Authors>theprabir</Authors>
-    <Product>ID Card Design &amp; Batch Printing Software</Product>
+    <Authors>Prabir kumar Das</Authors>
+    <Product>ID Stack</Product>
     <Description>Main WPF application for ID card design and batch printing.</Description>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DocumentationFile>$(OutputPath)IDCardSoftware.xml</DocumentationFile>

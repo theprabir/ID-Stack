@@ -70,7 +70,7 @@
     <value>ଟେମ୍ପଲେଟ ଲାଇବ୍ରେରୀ</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>ପରିଚୟ କାର୍ଡ ସଫ୍ଟୱେର</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>ସହାୟତା</value>
@@ -85,7 +85,7 @@
     <value>ଦୃଶ୍ୟ</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>ପରିଚୟ କାର୍ଡ ସଫ୍ଟୱେରକୁ ସ୍ୱାଗତ</value>
+    <value>ID Stackକୁ ସ୍ୱାଗତ</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>ଟେମ୍ପଲେଟ ସମ୍ପାଦକ</value>

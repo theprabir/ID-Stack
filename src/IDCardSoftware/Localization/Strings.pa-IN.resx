@@ -70,7 +70,7 @@
     <value>ਟੈਂਪਲੇਟ ਲਾਇਬਰੇਰੀ</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>ਆਈਡੀ ਕਾਰਡ ਸੌਫਟਵੇਅਰ</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>ਮਦਦ</value>
@@ -85,7 +85,7 @@
     <value>ਵੇਖੋ</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>ਆਈਡੀ ਕਾਰਡ ਸੌਫਟਵੇਅਰ ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ</value>
+    <value>ID Stack ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>ਟੈਂਪਲੇਟ ਸੰਪਾਦਕ</value>

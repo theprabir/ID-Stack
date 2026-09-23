@@ -9,8 +9,8 @@
     <AssemblyName>IDCardSoftware.Core</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Version>0.1.0</Version>
-    <Authors>theprabir</Authors>
-    <Product>ID Card Design &amp; Batch Printing Software</Product>
+    <Authors>Prabir kumar Das</Authors>
+    <Product>ID Stack</Product>
     <Description>Core library: models, interfaces, and constants shared across the ID Card application.</Description>
     <DocumentationFile>$(OutputPath)IDCardSoftware.Core.xml</DocumentationFile>
   </PropertyGroup>

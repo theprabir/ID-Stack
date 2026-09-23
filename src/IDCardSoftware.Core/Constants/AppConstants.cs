@@ -8,7 +8,10 @@ namespace IDCardSoftware.Core.Constants
     public static class AppConstants
     {
         /// <summary>Application display name.</summary>
-        public const string AppName = "ID Card Software";
+        public const string AppName = "ID Stack";
+
+        /// <summary>Application author.</summary>
+        public const string AppAuthor = "Prabir kumar Das";
 
         /// <summary>Application version.</summary>
         public const string AppVersion = "0.1.0";

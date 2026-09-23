@@ -70,7 +70,7 @@
     <value>ટેમ્પલેટ લાઇબ્રેરી</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>આઈડી કાર્ડ સોફ્ટવેર</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>સહાય</value>
@@ -85,7 +85,7 @@
     <value>દૃશ્ય</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>આઈડી કાર્ડ સોફ્ટવેરમાં આપનું સ્વાગત છે</value>
+    <value>ID Stackમાં આપનું સ્વાગત છે</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>ટેમ્પલેટ સંપાદક</value>

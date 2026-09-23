@@ -1,8 +1,8 @@
-# ID Card Design & Batch Printing Software
+# ID Stack — ID Card Design & Batch Printing Software
 
 ## 🎯 Overview
 
-A professional-grade, open-source **ID Card Design and Batch Printing Software** for Windows. It enables businesses, schools, colleges, event organizers, and printing presses to design ID cards with a Photoshop-like editor, import data from Excel and photos in bulk, generate hundreds of cards automatically, and print them efficiently using imposition (multiple cards per sheet) — including duplex (front + back) layouts.
+A professional-grade, open-source **ID Card Design and Batch Printing Software** for Windows, built by **Prabir kumar Das**. It enables businesses, schools, colleges, event organizers, and printing presses to design ID cards with a Photoshop-like editor, import data from Excel and photos in bulk, generate hundreds of cards automatically, and print them efficiently using imposition (multiple cards per sheet) — including duplex (front + back) layouts.
 
 Built with C# and WPF on .NET Framework 4.8, it runs on Windows 7 SP1 and later with **no external runtime dependencies** after installation.
 
@@ -53,10 +53,10 @@ Built with C# and WPF on .NET Framework 4.8, it runs on Windows 7 SP1 and later 
 
 ## 📥 Installation
 
-1. Download the latest installer (`IDCardSoftwareSetup.exe`) from the [Releases](../../releases) page.
+1. Download the latest installer (`IDStackSetup.exe`) from the [Releases](../../releases) page.
 2. Run the installer. It will automatically install .NET Framework 4.8 if it is not already present.
 3. Follow the setup wizard — no additional runtimes, MSVC redistributables, or manual dependencies are required.
-4. Launch **ID Card Software** from the Start Menu or desktop shortcut.
+4. Launch **ID Stack** from the Start Menu or desktop shortcut.
 
 ## 🚀 Quick Start Guide
 

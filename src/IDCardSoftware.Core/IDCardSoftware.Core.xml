@@ -12,6 +12,9 @@
         <member name="F:IDCardSoftware.Core.Constants.AppConstants.AppName">
             <summary>Application display name.</summary>
         </member>
+        <member name="F:IDCardSoftware.Core.Constants.AppConstants.AppAuthor">
+            <summary>Application author.</summary>
+        </member>
         <member name="F:IDCardSoftware.Core.Constants.AppConstants.AppVersion">
             <summary>Application version.</summary>
         </member>

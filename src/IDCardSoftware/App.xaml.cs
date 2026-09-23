@@ -72,7 +72,7 @@ namespace IDCardSoftware
         {
             MessageBox.Show(
                 "An unexpected error occurred. Please try again.",
-                "ID Card Software",
+                "ID Stack",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
             e.Handled = true;

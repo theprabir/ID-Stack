@@ -70,7 +70,7 @@
     <value>টেমপ্লেট লাইব্রেরি</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>আইডি কার্ড সফটওয়্যার</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>সাহায্য</value>
@@ -85,7 +85,7 @@
     <value>ভিউ</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>আইডি কার্ড সফটওয়্যারে স্বাগতম</value>
+    <value>ID Stackে স্বাগতম</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>টেমপ্লেট সম্পাদক</value>

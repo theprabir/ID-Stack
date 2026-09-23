@@ -70,7 +70,7 @@
     <value>टेम्पलेट लायब्ररी</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>आयडी कार्ड सॉफ्टवेअर</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>मदत</value>
@@ -85,7 +85,7 @@
     <value>दृश्य</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>आयडी कार्ड सॉफ्टवेअरमध्ये स्वागत आहे</value>
+    <value>ID Stackमध्ये स्वागत आहे</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>टेम्पलेट संपादक</value>

@@ -70,7 +70,7 @@
     <value>வார்ப்புரு நூலகம்</value>
   </data>
   <data name="App.Title" xml:space="preserve">
-    <value>அடையாள அட்டை மென்பொருள்</value>
+    <value>ID Stack</value>
   </data>
   <data name="Menu.Help" xml:space="preserve">
     <value>உதவி</value>
@@ -85,7 +85,7 @@
     <value>பார்வை</value>
   </data>
   <data name="Home.Welcome" xml:space="preserve">
-    <value>அடையாள அட்டை மென்பொருளுக்கு வரவேற்கிறோம்</value>
+    <value>ID Stack-க்கு வரவேற்கிறோம்</value>
   </data>
   <data name="Nav.TemplateEditor" xml:space="preserve">
     <value>வார்ப்புரு திருத்தி</value>
