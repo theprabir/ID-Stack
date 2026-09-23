@@ -1,0 +1,560 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IDStack.Core</name>
+    </assembly>
+    <members>
+        <member name="T:IDStack.Core.Constants.AppConstants">
+            <summary>
+            Application-wide constant values.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.AppConstants.AppName">
+            <summary>Application display name.</summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.AppConstants.AppAuthor">
+            <summary>Application author.</summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.AppConstants.AppVersion">
+            <summary>Application version.</summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.AppConstants.SettingsFileName">
+            <summary>Name of the settings file stored under the user profile.</summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.AppConstants.AppDataFolderName">
+            <summary>Company/product folder name used under %APPDATA%.</summary>
+        </member>
+        <member name="T:IDStack.Core.Constants.UnitConstants">
+            <summary>
+            Unit conversion constants shared across modules.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.UnitConstants.ScreenDpi">
+            <summary>Default screen DPI used for mm-to-pixel conversions.</summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.UnitConstants.MillimetersPerInch">
+            <summary>Millimeters per inch.</summary>
+        </member>
+        <member name="F:IDStack.Core.Constants.UnitConstants.PointsPerInch">
+            <summary>Points per inch (typography points).</summary>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.IHistoryService`1">
+            <summary>
+            Generic undo/redo stack for editor snapshots.
+            </summary>
+            <typeparam name="T">Snapshot state type.</typeparam>
+        </member>
+        <member name="E:IDStack.Core.Interfaces.IHistoryService`1.HistoryChanged">
+            <summary>Raised when undo/redo availability changes.</summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.IHistoryService`1.UndoCount">
+            <summary>Current number of undo steps available.</summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.IHistoryService`1.RedoCount">
+            <summary>Current number of redo steps available.</summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.IHistoryService`1.CanUndo">
+            <summary>Whether an undo step is available.</summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.IHistoryService`1.CanRedo">
+            <summary>Whether a redo step is available.</summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IHistoryService`1.Reset(`0)">
+            <summary>Clears all history and sets the initial state.</summary>
+            <param name="initialState">Baseline state.</param>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IHistoryService`1.Push(`0)">
+            <summary>Pushes a new state after a user edit, discarding any redo stack.</summary>
+            <param name="state">New current state.</param>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IHistoryService`1.Undo">
+            <summary>Reverts to the previous state.</summary>
+            <returns>The restored state.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IHistoryService`1.Redo">
+            <summary>Re-applies the next state after an undo.</summary>
+            <returns>The restored state.</returns>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.ILocalizationService">
+            <summary>
+            Provides localized strings for the application UI.
+            </summary>
+        </member>
+        <member name="E:IDStack.Core.Interfaces.ILocalizationService.LanguageChanged">
+            <summary>Raised after the UI culture changes so views can refresh bindings.</summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.ILocalizationService.CurrentLanguage">
+            <summary>Gets the culture code of the current language (e.g. "en-US").</summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.ILocalizationService.AvailableLanguages">
+            <summary>Gets the available languages keyed by culture code with native display names.</summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ILocalizationService.GetString(System.String)">
+            <summary>Returns the localized string for the given key; falls back to the key itself when missing.</summary>
+            <param name="key">Resource key.</param>
+            <returns>Localized text.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ILocalizationService.GetFormattedString(System.String,System.Object[])">
+            <summary>Returns the localized formatted string for the given key.</summary>
+            <param name="key">Resource key.</param>
+            <param name="args">Format arguments.</param>
+            <returns>Localized formatted text.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ILocalizationService.SetLanguage(System.String)">
+            <summary>Changes the UI language and persists the choice.</summary>
+            <param name="cultureCode">Culture code such as "hi-IN".</param>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.ISettingsService">
+            <summary>
+            Persists and retrieves application settings.
+            </summary>
+        </member>
+        <member name="P:IDStack.Core.Interfaces.ISettingsService.Settings">
+            <summary>Gets the current settings instance (never null).</summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ISettingsService.LoadAsync">
+            <summary>Loads settings from disk, creating defaults when no file exists.</summary>
+            <returns>The loaded settings.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ISettingsService.SaveAsync">
+            <summary>Saves the current settings to disk atomically.</summary>
+            <returns>A task that completes when the save finishes.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ISettingsService.Reset">
+            <summary>Resets settings to their default values.</summary>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.ITemplateService">
+            <summary>
+            Creates, persists, and loads card templates (.idcard files).
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ITemplateService.CreateNew(System.String)">
+            <summary>Creates a new empty template with CR80 front and back sides.</summary>
+            <param name="name">Template name.</param>
+            <returns>The new template.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ITemplateService.LoadAsync(System.String)">
+            <summary>Loads a template from a .idcard file.</summary>
+            <param name="filePath">Path to the file.</param>
+            <returns>The deserialized template.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ITemplateService.SaveAsync(IDStack.Core.Models.Template.CardTemplate,System.String)">
+            <summary>Saves a template to a .idcard file atomically.</summary>
+            <param name="template">Template to save.</param>
+            <param name="filePath">Destination path.</param>
+            <returns>A task completing when the write finishes.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ITemplateService.Validate(IDStack.Core.Models.Template.CardTemplate)">
+            <summary>Validates a template and returns human-readable problems (empty when valid).</summary>
+            <param name="template">Template to validate.</param>
+            <returns>List of validation messages.</returns>
+        </member>
+        <member name="T:IDStack.Core.Models.AppSettings">
+            <summary>
+            Serializable application settings persisted by <see cref="T:IDStack.Core.Interfaces.ISettingsService"/>.
+            </summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.Language">
+            <summary>UI language culture code (e.g. "en-US").</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.ShowGrid">
+            <summary>Whether to show the grid on the editor canvas by default.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.SnapToGrid">
+            <summary>Whether snapping to the grid is enabled by default.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.GridSizeMm">
+            <summary>Default grid size in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.MeasurementUnit">
+            <summary>Measurement unit used in the UI ("mm" or "inch").</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.RecentFiles">
+            <summary>Most recently opened template files (most recent first).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.WindowLeft">
+            <summary>Window left position (double.NaN lets WPF center the window).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.WindowTop">
+            <summary>Window top position.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.WindowWidth">
+            <summary>Window width.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.WindowHeight">
+            <summary>Window height.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.AppSettings.WindowMaximized">
+            <summary>Whether the window is maximized.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.BarcodeElement">
+            <summary>
+            Barcode element; actual barcode rendering lands with the batch engine.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.BarcodeElement.#ctor">
+            <summary>Creates a QR barcode element with square defaults.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.BarcodeElement.ElementType">
+            <inheritdoc />
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.BarcodeElement.BarcodeType">
+            <summary>Symbology to render.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.BarcodeElement.Data">
+            <summary>Static data to encode (ignored when PlaceholderColumn is set).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.BarcodeElement.PlaceholderColumn">
+            <summary>When set, encodes the value of this data column instead of Data.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.BarcodeElement.ForegroundColor">
+            <summary>Barcode foreground color as hex string.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.BarcodeElement.BackgroundColor">
+            <summary>Barcode background color as hex string.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.BarcodeElement.Clone">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.BarcodeType">
+            <summary>
+            Barcode symbologies supported by the application.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.BarcodeType.QR">
+            <summary>QR two-dimensional code.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.BarcodeType.Code128">
+            <summary>Code 128 linear barcode.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.BarcodeType.Code39">
+            <summary>Code 39 linear barcode.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.BarcodeType.EAN13">
+            <summary>EAN-13 retail barcode.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.BarcodeType.UPCA">
+            <summary>UPC-A retail barcode.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.CanvasElement">
+            <summary>
+            Abstract base for all elements placed on a template canvas.
+            Coordinates and sizes are in millimeters.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.CanvasElement.#ctor">
+            <summary>Creates an element with a fresh identifier and default CR80-scale geometry.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Id">
+            <summary>Unique element identifier.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Name">
+            <summary>User-visible element name.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.ElementType">
+            <summary>Element kind discriminator.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.X">
+            <summary>X position in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Y">
+            <summary>Y position in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Width">
+            <summary>Width in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Height">
+            <summary>Height in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Rotation">
+            <summary>Rotation in degrees (clockwise).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.Opacity">
+            <summary>Opacity from 0.0 (transparent) to 1.0 (opaque).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.IsVisible">
+            <summary>Whether the element is rendered.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.CanvasElement.IsLocked">
+            <summary>Whether the element can be moved or edited on the canvas.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.CanvasElement.Clone">
+            <summary>Creates a deep copy of this element.</summary>
+            <returns>An independent copy with the same geometry and style.</returns>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.CanvasElement.CopyBase``1(``0)">
+            <summary>Copies base geometry to a clone.</summary>
+            <param name="copy">The clone to populate.</param>
+            <typeparam name="T">Concrete element type.</typeparam>
+            <returns>The populated clone.</returns>
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.ElementType">
+            <summary>
+            Discriminates concrete canvas element kinds.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ElementType.Text">
+            <summary>Static text element.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ElementType.Image">
+            <summary>Image element.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ElementType.Shape">
+            <summary>Shape element (rectangle, circle, line).</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ElementType.Barcode">
+            <summary>Barcode element (QR, Code 128, etc.).</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ElementType.Placeholder">
+            <summary>Data-bound placeholder element.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.ImageElement">
+            <summary>
+            Image element rendering a picture file or data-bound photo.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.ImageElement.#ctor">
+            <summary>Creates an image element with square defaults.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ImageElement.ElementType">
+            <inheritdoc />
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ImageElement.Source">
+            <summary>Image file path (or placeholder token for data-bound photos).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ImageElement.Stretch">
+            <summary>Stretch mode: Fill, Uniform, or UniformToFill.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ImageElement.BorderColor">
+            <summary>Border color as hex string (empty for none).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ImageElement.BorderWidth">
+            <summary>Border width in millimeters (0 for none).</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.ImageElement.Clone">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.PlaceholderElement">
+            <summary>
+            Data-bound text element: renders the value of an imported data column.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.PlaceholderElement.#ctor">
+            <summary>Creates a placeholder with defaults.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.ElementType">
+            <inheritdoc />
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.ColumnName">
+            <summary>Data column name this placeholder binds to (without braces).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.Text">
+            <summary>Preview label shown in the editor when no data is bound.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.DefaultValue">
+            <summary>Fallback text shown when the column value is missing.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.TextFormat">
+            <summary>Optional display format (dates, numbers).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.FontFamily">
+            <summary>Font family name.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.FontSize">
+            <summary>Font size in points.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.TextColor">
+            <summary>Text color as hex string.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.IsBold">
+            <summary>Bold flag.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.IsItalic">
+            <summary>Italic flag.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.Alignment">
+            <summary>Horizontal alignment: Left, Center, or Right.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.PlaceholderElement.AutoResize">
+            <summary>Whether to shrink/expand to fit content.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.PlaceholderElement.Clone">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.ShapeElement">
+            <summary>
+            Vector shape element: rectangle, ellipse, or line.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.ShapeElement.#ctor">
+            <summary>Creates a rectangle shape with default styling.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ShapeElement.ElementType">
+            <inheritdoc />
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ShapeElement.ShapeKind">
+            <summary>Which shape geometry to draw.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ShapeElement.FillColor">
+            <summary>Fill color as hex string (empty for no fill).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ShapeElement.StrokeColor">
+            <summary>Stroke color as hex string.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ShapeElement.StrokeWidth">
+            <summary>Stroke width in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.ShapeElement.CornerRadius">
+            <summary>Corner radius for rectangles, in millimeters.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.ShapeElement.Clone">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.ShapeKind">
+            <summary>
+            Geometry kinds available for shape elements.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ShapeKind.Rectangle">
+            <summary>Rectangle (optionally rounded).</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ShapeKind.Ellipse">
+            <summary>Ellipse.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Elements.ShapeKind.Line">
+            <summary>Straight line.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Elements.TextElement">
+            <summary>
+            Static text element with font styling.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.TextElement.#ctor">
+            <summary>Creates a text element with sensible defaults.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.ElementType">
+            <inheritdoc />
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.Text">
+            <summary>The text content.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.FontFamily">
+            <summary>Font family name.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.FontSize">
+            <summary>Font size in points.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.IsBold">
+            <summary>Bold flag.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.IsItalic">
+            <summary>Italic flag.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.IsUnderline">
+            <summary>Underline flag.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.TextColor">
+            <summary>Text color as hex string.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Elements.TextElement.Alignment">
+            <summary>Horizontal alignment: Left, Center, or Right.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.TextElement.Clone">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.LanguageInfo">
+            <summary>
+            Metadata describing one of the languages supported by the application.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.LanguageInfo.#ctor(System.String,System.String)">
+            <summary>Creates a language descriptor.</summary>
+            <param name="cultureCode">Culture code (e.g. "hi-IN").</param>
+            <param name="displayName">Native display name (e.g. "हिंदी").</param>
+        </member>
+        <member name="P:IDStack.Core.Models.LanguageInfo.CultureCode">
+            <summary>Culture code such as "hi-IN".</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.LanguageInfo.DisplayName">
+            <summary>Native display name shown in the language selector.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Template.CardTemplate">
+            <summary>
+            Root model for a card template: two sides plus metadata, serialized to .idcard files.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Template.CardTemplate.#ctor">
+            <summary>Creates an empty template with default CR80 front and back sides.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.Id">
+            <summary>Unique template identifier.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.Name">
+            <summary>Display name of the template.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.Version">
+            <summary>Template schema version.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.CreatedDate">
+            <summary>Creation timestamp.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.ModifiedDate">
+            <summary>Last modification timestamp.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.FrontSide">
+            <summary>Front side of the card.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.BackSide">
+            <summary>Back side of the card.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.CardTemplate.Metadata">
+            <summary>Free-form metadata (author, category, etc.).</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Template.CardTemplate.GetSide(IDStack.Core.Models.Template.SideType)">
+            <summary>Returns the side matching the given type.</summary>
+            <param name="sideType">Front or Back.</param>
+            <returns>The matching side.</returns>
+        </member>
+        <member name="T:IDStack.Core.Models.Template.SideType">
+            <summary>
+            Identifies which side of the card a template side represents.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Template.SideType.Front">
+            <summary>Front side of the card.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Template.SideType.Back">
+            <summary>Back side of the card.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Template.TemplateSide">
+            <summary>
+            One side (front or back) of a card template with its canvas size and elements.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Template.TemplateSide.#ctor(IDStack.Core.Models.Template.SideType)">
+            <summary>Creates an empty side of the given type with CR80 dimensions.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.TemplateSide.SideType">
+            <summary>Which side this is.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.TemplateSide.CanvasWidth">
+            <summary>Canvas width in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.TemplateSide.CanvasHeight">
+            <summary>Canvas height in millimeters.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.TemplateSide.BackgroundColor">
+            <summary>Background color as hex string.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.TemplateSide.BackgroundImage">
+            <summary>Optional background image path.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Template.TemplateSide.Elements">
+            <summary>Elements placed on this side, in z-order.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Template.TemplateSide.Clone">
+            <summary>Clones this side including a deep copy of all elements.</summary>
+            <returns>An independent copy.</returns>
+        </member>
+    </members>
+</doc>

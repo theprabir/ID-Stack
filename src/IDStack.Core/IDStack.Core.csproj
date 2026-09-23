@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>IDStack.Core</RootNamespace>
+    <AssemblyName>IDStack.Core</AssemblyName>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.2.0</Version>
+    <Authors>Prabir kumar Das</Authors>
+    <Company>Prabir kumar Das</Company>
+    <Product>ID Stack</Product>
+    <Copyright>Copyright (c) 2026 Prabir kumar Das</Copyright>
+    <Description>Core library: models, interfaces, and constants shared across the ID Card application.</Description>
+    <DocumentationFile>$(OutputPath)IDStack.Core.xml</DocumentationFile>
+  </PropertyGroup>
+
+</Project>

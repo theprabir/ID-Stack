@@ -82,7 +82,7 @@ Built with C# and WPF on .NET Framework 4.8, it runs on Windows 7 SP1 and later 
    ```bash
    git clone https://github.com/your-org/idcard-software.git
    ```
-2. Open `IDCardSoftware.sln` in **Visual Studio 2022** (with .NET desktop development workload and .NET Framework 4.8 targeting pack).
+2. Open `IDStack.sln` in **Visual Studio 2022** (with .NET desktop development workload and .NET Framework 4.8 targeting pack).
 3. Restore NuGet packages (automatic on build).
 4. Build the solution (`Ctrl+Shift+B`) — Debug or Release, Any CPU.
 5. Run tests via Test Explorer or `tools/scripts/test.ps1`.
@@ -91,9 +91,9 @@ Built with C# and WPF on .NET Framework 4.8, it runs on Windows 7 SP1 and later 
 
 ```
 src/
-├── IDCardSoftware/        # Main WPF application (Views, ViewModels, Models, Services)
-├── IDCardSoftware.Core/   # Shared core library (models, interfaces, constants)
-└── IDCardSoftware.Tests/  # Unit and integration tests (MSTest/xUnit + Moq)
+├── IDStack/        # Main WPF application (Views, ViewModels, Models, Services)
+├── IDStack.Core/   # Shared core library (models, interfaces, constants)
+└── IDStack.Tests/  # Unit and integration tests (MSTest/xUnit + Moq)
 ```
 
 The project follows **MVVM** strictly with dependency injection, a service-oriented architecture, and async/await for all I/O. See [Architecture.md](Architecture.md) for the full technical blueprint.
@@ -150,12 +150,12 @@ Found a bug or have a feature request?
 
 ## 📊 Project Status
 
-**Current Phase: Phase 1 — Project Foundation (complete)**
+**Current Phase: Phase 2 — Template Editor (complete)**
 
 | Phase | Description | Status |
 |---|---|---|
 | 1 | Project Foundation (solution, MVVM, DI, main window shell, settings & localization services) | ✅ Complete |
-| 2 | Template Editor (canvas, tools, layers, properties, undo/redo, save/load) | ⏳ Not started |
+| 2 | Template Editor (canvas, tools, layers, properties, undo/redo, save/load) | ✅ Complete |
 | 3 | Data Import (Excel, photos, column mapping, validation, preview) | ⏳ Not started |
 | 4 | Batch Processing (generation engine, progress, export) | ⏳ Not started |
 | 5 | PSD Import & Template Library | ⏳ Not started |
@@ -166,7 +166,7 @@ Found a bug or have a feature request?
 
 **Known issues:** None.
 
-**Next steps:** Phase 2 — Template Editor.
+**Next steps:** Phase 3 — Data Import (Excel, photos, column mapping, validation, preview).
 
 ## 🙏 Acknowledgments
 

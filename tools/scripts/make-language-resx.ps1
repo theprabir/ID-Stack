@@ -3,7 +3,7 @@
 # to English via the resource manager satellite mechanism.
 $ErrorActionPreference = "Stop"
 
-$destDir = Join-Path $PSScriptRoot "..\..\src\IDCardSoftware\Localization"
+$destDir = Join-Path $PSScriptRoot "..\..\src\IDStack\Localization"
 $resxTemplatePath = Join-Path $destDir "Strings.resx"
 $template = Get-Content $resxTemplatePath -Raw -Encoding UTF8
 

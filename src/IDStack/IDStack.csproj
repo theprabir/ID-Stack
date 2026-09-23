@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>IDStack</RootNamespace>
+    <AssemblyName>IDStack</AssemblyName>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.2.0</Version>
+    <Authors>Prabir kumar Das</Authors>
+    <Company>Prabir kumar Das</Company>
+    <Product>ID Stack</Product>
+    <Description>ID Stack — professional ID card design and batch printing software.</Description>
+    <Copyright>Copyright (c) 2026 Prabir kumar Das</Copyright>
+    <AssemblyTitle>ID Stack</AssemblyTitle>
+    <AssemblyProduct>ID Stack</AssemblyProduct>
+    <AssemblyDescription>ID card design and batch printing</AssemblyDescription>
+    <FileVersion>0.2.0</FileVersion>
+    <InformationalVersion>0.2.0</InformationalVersion>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DocumentationFile>$(OutputPath)IDStack.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\IDStack.Core\IDStack.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
