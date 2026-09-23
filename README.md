@@ -150,11 +150,11 @@ Found a bug or have a feature request?
 
 ## 📊 Project Status
 
-**Current Phase: Initialization (pre-Phase 1)**
+**Current Phase: Phase 1 — Project Foundation (complete)**
 
 | Phase | Description | Status |
 |---|---|---|
-| 1 | Project Foundation (solution, MVVM, DI, main window shell, settings & localization services) | ⏳ Not started |
+| 1 | Project Foundation (solution, MVVM, DI, main window shell, settings & localization services) | ✅ Complete |
 | 2 | Template Editor (canvas, tools, layers, properties, undo/redo, save/load) | ⏳ Not started |
 | 3 | Data Import (Excel, photos, column mapping, validation, preview) | ⏳ Not started |
 | 4 | Batch Processing (generation engine, progress, export) | ⏳ Not started |
@@ -162,11 +162,11 @@ Found a bug or have a feature request?
 | 6 | Imposition Engine (sheet layout, numbering, print-ready PDF) | ⏳ Not started |
 | 7 | Polish & Production (translations, fonts, installer, final testing) | ⏳ Not started |
 
-**Implemented so far:** Project documentation, license, and repository setup.
+**Implemented so far:** Project documentation, license, repository setup, and **Phase 1 — Project Foundation** (see [CHANGELOG.md](CHANGELOG.md)).
 
 **Known issues:** None.
 
-**Next steps:** Phase 1 — Project Foundation.
+**Next steps:** Phase 2 — Template Editor.
 
 ## 🙏 Acknowledgments
 
