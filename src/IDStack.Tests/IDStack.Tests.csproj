@@ -8,6 +8,8 @@
     <RootNamespace>IDStack.Tests</RootNamespace>
     <AssemblyName>IDStack.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Authors>Prabir kumar Das</Authors>
   </PropertyGroup>
@@ -21,6 +23,8 @@
     <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
     <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="EPPlus" Version="4.5.3.3" />
+    <PackageReference Include="NPOI" Version="2.6.2" />
   </ItemGroup>
 
 </Project>

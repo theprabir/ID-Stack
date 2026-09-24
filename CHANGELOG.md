@@ -3,6 +3,59 @@
 All notable changes to **ID Stack** — the ID Card Design & Batch Printing Software by Prabir kumar Das — are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] — Phase 3: Data Import (2026-09-24)
+
+### Added
+
+**Data models (`IDStack.Core/Models/Import`):**
+
+- `ExcelData` (columns + rows + source metadata), `DataRow` (case-insensitive column access, missing cells = empty string), `ColumnMapping` (placeholder ↔ column binding with required flag), `PhotoRecord` (file path, match key), `CropMode` (Fit/Center/Stretch), `ValidationIssue` (Info/Warning/Error)
+
+**Service interfaces & implementations:**
+
+- `IExcelService` / `ExcelService` — loads **.xlsx** (EPPlus 4.5, LGPL), **.xls** (NPOI), and **.csv** (manual RFC-4180-style parser with quotes, `,`/`;`/tab delimiters, BOM detection); column preview, row loading, structural validation; all I/O async off the UI thread
+- `IPhotoService` / `PhotoService` — folder scan (JPG/PNG/BMP/TIFF), three-stage matching (exact → with-extension → fuzzy contains), 300-DPI print processing with a bounded in-memory cache and `ClearPhotoCache()`
+- `IImageProcessingService` / `ImageProcessingService` — resize (aspect-preserving), crop, rotate, dimension probe, plus `ResizeExact` for fill/fit/stretch modes; fully managed via SixLabors.ImageSharp (no native deps, Win7-safe)
+- `IDataValidationService` / `DataValidationService` — missing required columns/values, duplicate-ID warnings, photo-file existence checks; issues ordered by row and severity
+
+**Data Import wizard (replaces the Phase 3 placeholder page):**
+
+- `DataImportViewModel` orchestrating 4 steps: ① Excel file → ② Column mapping → ③ Photos → ④ Validation
+- `ExcelImportViewModel` — file picking via dialog event, loading state, row/column status, `TestSetData` hook for tests
+- `ColumnMappingViewModel` + `ColumnMappingItemViewModel` — auto-builds one row per template placeholder (both sides), auto-matches by name, live sample values from the first data row, ✓/⚠ status icons, required-mapped tracking
+- `PhotoImportViewModel` — folder browse event, photo list, match-by-column, matched-count status, rematch command
+- `DataImportView` — step tabs, per-step panels (file picker, mapping grid, photo list, validation report with ID-column duplicate check), Win7-compatible dialogs (`OpenFileDialog` + WinForms `FolderBrowserDialog` owned by the WPF window)
+- `CanGenerate` gate: data loaded + all required placeholders mapped (ready for Phase 4 batch generation)
+
+**Dependencies:** EPPlus 4.5.3.3, NPOI 2.6.2, SixLabors.ImageSharp 2.1.4 (all pure managed NuGet packages; Windows Forms enabled for the folder dialog)
+
+### Tests
+
+- 50 new tests: ExcelService (14), PhotoService + ImageProcessingService (17), DataValidationService (9), DataImportViewModels (9), 1000-row import performance guardrail (< 5 s per spec) — **120 total, all passing**
+
+## [0.2.1] — Editor Hardening (2026-09-24)
+
+### Added
+
+- **New Document dialog** (`NewDocumentDialog`): Photoshop-style preset picker (CR80 portrait/landscape, A6, A7, business card, badge) with editable width/height, unit selection (mm/cm/in/px), and orientation toggle; applied to both card sides via Ctrl+N
+- **File logging**: `ILogger` interface in `IDStack.Core` and `LogService` writing daily files to `%APPDATA%\IDStack\logs\`; startup, errors, and unhandled exceptions are logged (never throws)
+- **Live element editing**: `CanvasElement` now raises `INotifyPropertyChanged` so the properties panel, layers panel, and canvas stay in sync during drags and edits
+
+### Changed
+
+- `CanvasControl` upgraded to a professional design surface: dark surround with card border, rulers, adaptive grid, 8-way resize handles, drag-move, pan (space/middle-drag), zoom at cursor, inline text editing, keyboard shortcuts (arrows nudge, Delete, Ctrl+D duplicate, Ctrl+Z/Y undo/redo)
+- `MainWindow` opens maximized with smaller minimum size (960×600) for 1366×768 displays; sidebar contrast fix
+- Automation names added to editor buttons for UI testing and accessibility
+- Global exception handlers log to file before showing the error dialog
+
+### Fixed
+
+- `NewDocument` no longer throws `NullReferenceException` when elements exist or after undo (regression covered by `NewDocumentCrashTests`)
+
+### Tests
+
+- 2 new crash-regression tests (`NewDocumentCrashTests`) — **70 total, all passing**
+
 ## [0.2.0] — Phase 2: Template Editor (2026-09-23)
 
 ### Added
@@ -29,8 +82,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Tests
 
 - 25 new tests: HistoryService (6), TemplateService (7), TemplateEditorViewModel (12) — **68 total, all passing**
-
-## [0.1.0] — Phase 1: Project Foundation (2026-09-23)
 
 ## [0.1.0] — Phase 1: Project Foundation (2026-09-23)
 

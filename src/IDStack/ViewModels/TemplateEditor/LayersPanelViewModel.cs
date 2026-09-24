@@ -33,6 +33,24 @@ namespace IDStack.ViewModels.TemplateEditor
         public void Attach(TemplateEditorViewModel editor)
         {
             _editor = editor;
+            _editor.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(TemplateEditorViewModel.CurrentSide) ||
+                    e.PropertyName == nameof(TemplateEditorViewModel.SelectedElement))
+                {
+                    Refresh();
+                }
+            };
+            if (_editor.CurrentSide != null)
+            {
+                _editor.CurrentSide.Elements.CollectionChanged += (s, e) => Refresh();
+            }
+            _editor.ElementsChanged += (s, e) => Refresh();
+            Refresh();
+        }
+
+        private void Refresh()
+        {
             OnPropertyChanged(nameof(Elements));
             OnPropertyChanged(nameof(HasElements));
         }
@@ -55,6 +73,12 @@ namespace IDStack.ViewModels.TemplateEditor
 
         /// <summary>Toggles element lock (parameter: element).</summary>
         public RelayCommand ToggleLockCommand { get; }
+
+        /// <summary>Re-raises change notifications after element mutations.</summary>
+        public void NotifyElementsChanged()
+        {
+            Refresh();
+        }
 
         private void MoveSelected(int direction)
         {
@@ -110,12 +134,6 @@ namespace IDStack.ViewModels.TemplateEditor
             element.IsLocked = !element.IsLocked;
             _editor?.CommitChange();
             Refresh();
-        }
-
-        private void Refresh()
-        {
-            OnPropertyChanged(nameof(Elements));
-            OnPropertyChanged(nameof(HasElements));
         }
     }
 }

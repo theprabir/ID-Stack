@@ -34,6 +34,15 @@ namespace IDStack.ViewModels.TemplateEditor
         /// <summary>Raised when the editor requests a file-open dialog.</summary>
         public event EventHandler OpenRequested;
 
+        /// <summary>Raised when the editor requests the new-document dialog.</summary>
+        public event EventHandler NewRequested;
+
+        /// <summary>Panel view model for the layers list.</summary>
+        public LayersPanelViewModel Layers { get; }
+
+        /// <summary>Panel view model for the properties grid.</summary>
+        public PropertiesPanelViewModel Properties { get; }
+
         /// <summary>
         /// Creates the editor view model.
         /// </summary>
@@ -50,7 +59,12 @@ namespace IDStack.ViewModels.TemplateEditor
             _selectedSide = SideType.Front;
             _history.Reset(Snapshot());
 
-            NewCommand = new RelayCommand(_ => NewTemplate());
+            Layers = new LayersPanelViewModel(localization);
+            Properties = new PropertiesPanelViewModel(localization);
+            Layers.Attach(this);
+            Properties.Attach(this);
+
+            NewCommand = new RelayCommand(_ => NewRequested?.Invoke(this, EventArgs.Empty));
             OpenCommand = new RelayCommand(_ => OpenRequested?.Invoke(this, EventArgs.Empty));
             SaveCommand = new RelayCommand(_ => RequestSave(false));
             SaveAsCommand = new RelayCommand(_ => RequestSave(true));
@@ -229,6 +243,7 @@ namespace IDStack.ViewModels.TemplateEditor
 
             CenterNewElement(element);
             CurrentSide.Elements.Add(element);
+            HookElementNotifications();
             SelectedElement = element;
             CommitChange();
             StatusText = "Added " + element.Name;
@@ -277,6 +292,7 @@ namespace IDStack.ViewModels.TemplateEditor
             IsModified = true;
             OnPropertyChanged(nameof(UndoCount));
             OnPropertyChanged(nameof(RedoCount));
+            OnPropertyChanged(nameof(Elements));
         }
 
         /// <summary>Loads a template file into the editor.</summary>
@@ -299,6 +315,25 @@ namespace IDStack.ViewModels.TemplateEditor
             FilePath = path;
             IsModified = false;
             StatusText = "Saved";
+        }
+
+        /// <summary>Wires PropertyChanged for the canvas and panels after collection changes.</summary>
+        public event EventHandler ElementsChanged;
+
+        private void HookElementNotifications()
+        {
+            foreach (var element in CurrentSide.Elements)
+            {
+                element.PropertyChanged -= OnElementModelChanged;
+                element.PropertyChanged += OnElementModelChanged;
+            }
+            ElementsChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void OnElementModelChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // Property edits (resize/move/properties panel) refresh layers + canvas.
+            ElementsChanged?.Invoke(this, EventArgs.Empty);
         }
 
         private EditorState Snapshot()
@@ -345,6 +380,7 @@ namespace IDStack.ViewModels.TemplateEditor
             {
                 _suppressHistory = false;
             }
+            HookElementNotifications();
             OnPropertyChanged(nameof(Elements));
             OnPropertyChanged(nameof(UndoCount));
             OnPropertyChanged(nameof(RedoCount));
@@ -354,6 +390,28 @@ namespace IDStack.ViewModels.TemplateEditor
         {
             element.X = Math.Max(0, (CurrentSide.CanvasWidth - element.Width) / 2.0);
             element.Y = Math.Max(0, (CurrentSide.CanvasHeight - element.Height) / 2.0);
+        }
+
+        /// <summary>
+        /// Creates a new empty template with the given card dimensions.
+        /// </summary>
+        /// <param name="widthMm">Card width in millimeters.</param>
+        /// <param name="heightMm">Card height in millimeters.</param>
+        public void NewDocument(double widthMm, double heightMm)
+        {
+            Template = _templateService.CreateNew("Untitled Template");
+            Template.FrontSide.CanvasWidth = widthMm;
+            Template.FrontSide.CanvasHeight = heightMm;
+            Template.BackSide.CanvasWidth = widthMm;
+            Template.BackSide.CanvasHeight = heightMm;
+            FilePath = null;
+            SelectedElement = null;
+            SelectedSideType = SideType.Front;
+            OnPropertyChanged(nameof(CurrentSide));
+            OnPropertyChanged(nameof(Elements));
+            IsModified = false;
+            _history.Reset(Snapshot());
+            StatusText = "New " + widthMm + "×" + heightMm + " mm";
         }
 
         private void NewTemplate()

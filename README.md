@@ -156,17 +156,17 @@ Found a bug or have a feature request?
 |---|---|---|
 | 1 | Project Foundation (solution, MVVM, DI, main window shell, settings & localization services) | ✅ Complete |
 | 2 | Template Editor (canvas, tools, layers, properties, undo/redo, save/load) | ✅ Complete |
-| 3 | Data Import (Excel, photos, column mapping, validation, preview) | ⏳ Not started |
+| 3 | Data Import (Excel, photos, column mapping, validation, preview) | ✅ Complete |
 | 4 | Batch Processing (generation engine, progress, export) | ⏳ Not started |
 | 5 | PSD Import & Template Library | ⏳ Not started |
 | 6 | Imposition Engine (sheet layout, numbering, print-ready PDF) | ⏳ Not started |
 | 7 | Polish & Production (translations, fonts, installer, final testing) | ⏳ Not started |
 
-**Implemented so far:** Project documentation, license, repository setup, and **Phase 1 — Project Foundation** (see [CHANGELOG.md](CHANGELOG.md)).
+**Implemented so far:** Project documentation, license, repository setup, **Phase 1 — Project Foundation**, **Phase 2 — Template Editor** (+ editor hardening), and **Phase 3 — Data Import** (Excel/CSV import, column mapping to placeholders, photo matching, data validation — see [CHANGELOG.md](CHANGELOG.md)).
 
-**Known issues:** None.
+**Known issues:** Editor-panel refinements deferred; features will be polished one by one after the remaining phases.
 
-**Next steps:** Phase 3 — Data Import (Excel, photos, column mapping, validation, preview).
+**Next steps:** Phase 4 — Batch Processing (generation engine, progress, export).
 
 ## 🙏 Acknowledgments
 

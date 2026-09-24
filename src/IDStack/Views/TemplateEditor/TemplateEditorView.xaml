@@ -24,10 +24,12 @@
                 <RadioButton Content="Back" IsChecked="{Binding SelectedSideType, Converter={StaticResource SideTypeToBoolConverter}, ConverterParameter=Back, Mode=TwoWay}"
                              Command="{Binding SwitchToBackCommand}" Margin="0,0,12,0" VerticalAlignment="Center" />
                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="−"
+                        AutomationProperties.Name="Zoom Out"
                         Command="{Binding ZoomOutCommand}" Margin="0,0,2,0" Width="28" />
                 <TextBlock Text="{Binding ZoomPercentText}"
                            VerticalAlignment="Center" Width="46" TextAlignment="Center" />
                 <Button Style="{StaticResource SecondaryButtonStyle}" Content="+"
+                        AutomationProperties.Name="Zoom In"
                         Command="{Binding ZoomInCommand}" Margin="0,0,4,0" Width="28" />
                 <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center"
                            Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" />
@@ -36,7 +38,7 @@
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="170" />
+                <ColumnDefinition Width="175" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="190" />
                 <ColumnDefinition Width="230" />
@@ -47,23 +49,32 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Tools" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="T  Text"
+                            AutomationProperties.Name="Add Text"
                             Command="{Binding AddTextCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="🖼  Image"
+                            AutomationProperties.Name="Add Image"
                             Command="{Binding AddImageCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="▭  Rectangle"
+                            AutomationProperties.Name="Add Rectangle"
                             Command="{Binding AddRectangleCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="◯  Ellipse"
+                            AutomationProperties.Name="Add Ellipse"
                             Command="{Binding AddEllipseCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="／  Line"
+                            AutomationProperties.Name="Add Line"
                             Command="{Binding AddLineCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="▤  Barcode"
+                            AutomationProperties.Name="Add Barcode"
                             Command="{Binding AddBarcodeCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="{}{{x}}  Placeholder"
+                            AutomationProperties.Name="Add Placeholder"
                             Command="{Binding AddPlaceholderCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Separator Margin="0,8" />
                     <Button Style="{StaticResource SecondaryButtonStyle}" Content="Duplicate"
+                            AutomationProperties.Name="Duplicate"
                             Command="{Binding DuplicateSelectedCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                     <Button Style="{StaticResource DangerButtonStyle}" Content="Delete"
+                            AutomationProperties.Name="Delete"
                             Command="{Binding DeleteSelectedCommand}" Margin="0,2" HorizontalAlignment="Stretch" />
                 </StackPanel>
             </Border>
@@ -71,11 +82,8 @@
             <!-- Canvas -->
             <Border Grid.Column="1" Background="{StaticResource SurfaceHoverBrush}"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                    CornerRadius="4" Margin="2,6">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Auto">
-                    <ContentControl x:Name="CanvasHost" Margin="24" />
-                </ScrollViewer>
+                    CornerRadius="4" Margin="2,6" ClipToBounds="True">
+                <ContentControl x:Name="CanvasHost" />
             </Border>
 
             <!-- Layers panel -->
@@ -106,18 +114,47 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Properties" />
-                        <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="X (mm)" />
-                        <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.X, Mode=TwoWay}" />
-                        <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Y (mm)" />
-                        <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Y, Mode=TwoWay}" />
-                        <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Width (mm)" />
-                        <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Width, Mode=TwoWay}" />
-                        <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Height (mm)" />
-                        <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Height, Mode=TwoWay}" />
-                        <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Rotation" />
-                        <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Rotation, Mode=TwoWay}" />
-                        <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Opacity %" />
-                        <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.OpacityPercent, Mode=TwoWay}" />
+                        <TextBlock Margin="0,0,0,8" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Select an element to edit its properties">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Properties.HasElement}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <StackPanel Visibility="{Binding Properties.HasElement, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                            <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="X (mm)" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Y (mm)" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Width (mm)" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Width, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Height (mm)" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Height, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Rotation" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Rotation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Opacity %" />
+                            <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.OpacityPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Visibility="{Binding Properties.IsTextElement, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                                <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Text" />
+                                <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                                <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Font size (pt)" />
+                                <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.FontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+                            <StackPanel Visibility="{Binding Properties.IsShapeElement, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                                <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Fill color (hex)" />
+                                <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.FillColor, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
+                            <StackPanel Visibility="{Binding Properties.IsPlaceholderElement, Converter={StaticResource BoolToVisibilityConverter}, FallbackValue=Collapsed}">
+                                <TextBlock Style="{StaticResource FormFieldLabelStyle}" Text="Data column" />
+                                <TextBox Style="{StaticResource ModernTextBoxStyle}" Text="{Binding Properties.ColumnName, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                            </StackPanel>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

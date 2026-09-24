@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>7.3</LangVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -27,6 +28,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\IDStack.Core\IDStack.Core.csproj" />
   </ItemGroup>
 
@@ -35,6 +40,9 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
+    <PackageReference Include="EPPlus" Version="4.5.3.3" />
+    <PackageReference Include="NPOI" Version="2.6.2" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.4" />
   </ItemGroup>
 
   <ItemGroup>

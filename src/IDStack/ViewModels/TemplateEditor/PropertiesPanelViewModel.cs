@@ -37,7 +37,22 @@ namespace IDStack.ViewModels.TemplateEditor
                     Element = _editor.SelectedElement;
                 }
             };
+            _editor.ElementsChanged += (s, e) => RefreshValues();
             Element = _editor.SelectedElement;
+        }
+
+        private void RefreshValues()
+        {
+            OnPropertyChanged(nameof(X));
+            OnPropertyChanged(nameof(Y));
+            OnPropertyChanged(nameof(Width));
+            OnPropertyChanged(nameof(Height));
+            OnPropertyChanged(nameof(Rotation));
+            OnPropertyChanged(nameof(OpacityPercent));
+            OnPropertyChanged(nameof(Text));
+            OnPropertyChanged(nameof(FontSize));
+            OnPropertyChanged(nameof(FillColor));
+            OnPropertyChanged(nameof(ColumnName));
         }
 
         /// <summary>The selected element being edited (null when nothing selected).</summary>

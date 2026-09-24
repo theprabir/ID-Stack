@@ -12,6 +12,11 @@
             App
             </summary>
         </member>
+        <member name="P:IDStack.App.Services">
+            <summary>
+            Gets the application service provider for view code that needs services.
+            </summary>
+        </member>
         <member name="M:IDStack.App.OnStartup(System.Windows.StartupEventArgs)">
             <summary>
             Builds the service container and creates the main window.
@@ -273,6 +278,36 @@
             <param name="value">Element to serialize.</param>
             <param name="serializer">Serializer to use.</param>
         </member>
+        <member name="T:IDStack.Services.DataValidationService">
+            <summary>
+            Checks imported data for the problems that break batch generation:
+            missing required values, duplicate IDs, and photos that no longer exist.
+            </summary>
+        </member>
+        <member name="M:IDStack.Services.DataValidationService.Validate(IDStack.Core.Models.Import.ExcelData,System.Collections.Generic.IEnumerable{System.String},System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord})">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Services.ExcelService">
+            <summary>
+            Loads .xlsx (EPPlus), .xls (NPOI), and .csv files into ExcelData.
+            Missing cells are returned as empty strings; all I/O is async off the UI thread.
+            </summary>
+        </member>
+        <member name="M:IDStack.Services.ExcelService.LoadExcelFileAsync(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ExcelService.GetColumnNamesAsync(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ExcelService.GetPreviewAsync(System.String,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ExcelService.GetAllRowsAsync(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ExcelService.ValidateExcelFile(System.String,System.String@)">
+            <inheritdoc />
+        </member>
         <member name="T:IDStack.Services.HistoryService`1">
             <summary>
             Snapshot-based undo/redo history with a bounded stack.
@@ -310,6 +345,55 @@
             <inheritdoc />
         </member>
         <member name="M:IDStack.Services.HistoryService`1.Redo">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Services.ImageProcessingService">
+            <summary>
+            Image resize/crop/rotate built on SixLabors.ImageSharp (fully managed, no native deps).
+            All operations return PNG bytes suitable for print rendering.
+            </summary>
+        </member>
+        <member name="M:IDStack.Services.ImageProcessingService.ResizeImage(System.Byte[],System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ImageProcessingService.CropImage(System.Byte[],System.Int32,System.Int32,System.Int32,System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ImageProcessingService.RotateImage(System.Byte[],System.Double)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ImageProcessingService.GetImageDimensions(System.Byte[])">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.ImageProcessingService.ResizeExact(System.Byte[],System.Int32,System.Int32,SixLabors.ImageSharp.Processing.ResizeMode)">
+            <summary>
+            Resizes to the exact size using the given mode; used by photo processing pipelines.
+            </summary>
+            <param name="imageData">Source bytes.</param>
+            <param name="width">Target width in pixels.</param>
+            <param name="height">Target height in pixels.</param>
+            <param name="mode">Resize strategy: Max (fit), BoxPad (fill+crop), Stretch.</param>
+            <returns>Processed PNG bytes.</returns>
+        </member>
+        <member name="T:IDStack.Services.LogService">
+            <summary>
+            File-based logger writing to %APPDATA%\IDStack\logs\yyyy-MM-dd.log.
+            Never throws: logging failures are silently ignored by design.
+            </summary>
+        </member>
+        <member name="M:IDStack.Services.LogService.#ctor(System.String)">
+            <summary>
+            Creates the logger, writing into the given directory (defaults to %APPDATA%\IDStack\logs).
+            </summary>
+            <param name="logDirectory">Target directory.</param>
+        </member>
+        <member name="M:IDStack.Services.LogService.Info(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.LogService.Warn(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.LogService.Error(System.Exception,System.String)">
             <inheritdoc />
         </member>
         <member name="T:IDStack.Services.INavigationService">
@@ -356,6 +440,33 @@
         <member name="M:IDStack.Services.NavigationService.NavigateTo(System.String)">
             <inheritdoc />
         </member>
+        <member name="T:IDStack.Services.PhotoService">
+            <summary>
+            Loads photos from a folder, matches them to data rows, and processes them for placement.
+            Processed photos are cached in memory (bounded) and released on demand.
+            </summary>
+        </member>
+        <member name="M:IDStack.Services.PhotoService.#ctor(IDStack.Core.Interfaces.IImageProcessingService)">
+            <summary>
+            Creates the photo service.
+            </summary>
+            <param name="imageProcessing">Low-level image operations.</param>
+        </member>
+        <member name="M:IDStack.Services.PhotoService.LoadPhotosFromFolderAsync(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.PhotoService.MatchPhotoByNameAsync(System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord})">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.PhotoService.MatchPhotoByColumnAsync(System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord},System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.PhotoService.ProcessPhotoAsync(IDStack.Core.Models.Import.PhotoRecord,System.Double,System.Double,IDStack.Core.Models.Import.CropMode)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Services.PhotoService.ClearPhotoCache">
+            <inheritdoc />
+        </member>
         <member name="T:IDStack.Services.SettingsService">
             <summary>
             Persists application settings as JSON under %APPDATA%\IDStack.
@@ -395,6 +506,279 @@
         </member>
         <member name="M:IDStack.Services.TemplateService.Validate(IDStack.Core.Models.Template.CardTemplate)">
             <inheritdoc />
+        </member>
+        <member name="T:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel">
+            <summary>
+            One row in the column-mapping grid: a placeholder, its bound column, and sample data.
+            </summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.#ctor(System.String,System.Collections.ObjectModel.ObservableCollection{System.String},System.Boolean)">
+            <summary>
+            Creates a mapping row.
+            </summary>
+            <param name="placeholderName">Placeholder name without braces.</param>
+            <param name="columns">Available Excel column names.</param>
+            <param name="isRequired">Whether the placeholder must be mapped.</param>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.PlaceholderName">
+            <summary>Placeholder name (no braces).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.AvailableColumns">
+            <summary>Columns offered in the dropdown.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.IsRequired">
+            <summary>Whether the placeholder must be mapped before generation.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.ColumnName">
+            <summary>Bound Excel column name, or null when unmapped.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.SampleValue">
+            <summary>First-row sample value from the bound column.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.IsMapped">
+            <summary>Whether the placeholder is mapped.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.StatusIcon">
+            <summary>Visual status: ✓ mapped, ⚠ unmapped-required, · optional-unmapped.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.RefreshSample(IDStack.Core.Models.Import.ExcelData)">
+            <summary>Fills the sample value from the data using the current binding.</summary>
+            <param name="data">Loaded data, or null.</param>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingItemViewModel.ToMapping">
+            <summary>Converts this row into a model mapping.</summary>
+            <returns>A ColumnMapping.</returns>
+        </member>
+        <member name="T:IDStack.ViewModels.DataImport.ColumnMappingViewModel">
+            <summary>
+            Maps template placeholders to Excel columns and shows a live sample preview.
+            </summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingViewModel.#ctor">
+            <summary>
+            Creates the mapping view model.
+            </summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingViewModel.Mappings">
+            <summary>One row per distinct placeholder in the template (both sides).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingViewModel.AvailableColumns">
+            <summary>Columns available from the loaded data file.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingViewModel.StatusText">
+            <summary>Status line (counts of mapped/unmapped).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ColumnMappingViewModel.AllRequiredMapped">
+            <summary>Whether every required placeholder is mapped.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingViewModel.BuildFrom(IDStack.Core.Models.Template.CardTemplate,IDStack.Core.Models.Import.ExcelData)">
+            <summary>
+            Rebuilds the mapping rows from the template's placeholders and the loaded columns.
+            </summary>
+            <param name="template">Current template.</param>
+            <param name="data">Loaded data, or null when none loaded yet.</param>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingViewModel.RefreshSamples(IDStack.Core.Models.Import.ExcelData)">
+            <summary>Refreshes sample values after a new data file is loaded.</summary>
+            <param name="data">Loaded data, or null.</param>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingViewModel.GetMappings">
+            <summary>Extracts the current bindings as model mappings.</summary>
+            <returns>Mappings for all rows (unmapped rows have a null column).</returns>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ColumnMappingViewModel.GetRequiredColumns">
+            <summary>Columns the user marked as required and mapped.</summary>
+            <returns>Bound column names.</returns>
+        </member>
+        <member name="T:IDStack.ViewModels.DataImport.DataImportViewModel">
+            <summary>
+            Orchestrates the Phase 3 data-import flow:
+            Excel file → column mapping → photo import → validation report.
+            </summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.#ctor(IDStack.Core.Interfaces.IExcelService,IDStack.Core.Interfaces.IPhotoService,IDStack.Core.Interfaces.IDataValidationService,IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel)">
+            <summary>
+            Creates the data import view model.
+            </summary>
+            <param name="excelService">Excel loading service.</param>
+            <param name="photoService">Photo service.</param>
+            <param name="validationService">Validation service.</param>
+            <param name="editor">Template editor state (provides the current template).</param>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Editor">
+            <summary>Editor view model providing the active template.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Excel">
+            <summary>Step 1: Excel import.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Mapping">
+            <summary>Step 2: Column mapping.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Photos">
+            <summary>Step 3: Photo import.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ImportExcelFileCommand">
+            <summary>Loads the picked data file.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.BrowsePhotosCommand">
+            <summary>Browses for the photo folder.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ValidateCommand">
+            <summary>Runs data validation.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.SelectedStep">
+            <summary>Selected wizard step (0 Excel, 1 Mapping, 2 Photos, 3 Validation).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowExcelStep">
+            <summary>Whether the Excel step is visible.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowMappingStep">
+            <summary>Whether the mapping step is visible.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowPhotosStep">
+            <summary>Whether the photos step is visible.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowValidationStep">
+            <summary>Whether the validation step is visible.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.StatusText">
+            <summary>Overall status line.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.PreviewRows">
+            <summary>First rows of loaded data for the preview grid.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Issues">
+            <summary>Validation issues from the latest run.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.IdColumnName">
+            <summary>Column treated as the unique card ID for duplicate checking.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.CanGenerate">
+            <summary>Whether the flow can proceed to batch generation (Phase 4).</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.RunValidation">
+            <summary>
+            Runs validation over the loaded data and switches to the validation step.
+            </summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ValidationSummary">
+            <summary>One-line validation summary for the report step.</summary>
+        </member>
+        <member name="E:IDStack.ViewModels.DataImport.DataImportViewModel.ExcelFilePicked">
+            <summary>Raised when Excel wants a file dialog; the view hosts the dialog.</summary>
+        </member>
+        <member name="E:IDStack.ViewModels.DataImport.DataImportViewModel.PhotoFolderPicked">
+            <summary>Raised when Photos wants a folder dialog; the view hosts the dialog.</summary>
+        </member>
+        <member name="T:IDStack.ViewModels.DataImport.ExcelImportViewModel">
+            <summary>
+            Handles file picking, loading, and preview of the Excel/CSV data source.
+            </summary>
+        </member>
+        <member name="E:IDStack.ViewModels.DataImport.ExcelImportViewModel.DataLoaded">
+            <summary>Raised after the data file loads successfully.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ExcelImportViewModel.#ctor(IDStack.Core.Interfaces.IExcelService)">
+            <summary>
+            Creates the Excel import view model.
+            </summary>
+            <param name="excelService">Excel loading service.</param>
+        </member>
+        <member name="E:IDStack.ViewModels.DataImport.ExcelImportViewModel.ImportRequested">
+            <summary>Raised when the view model wants a file-open dialog.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.ImportFileCommand">
+            <summary>Import command (opens the file dialog via ImportRequested).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.ClearCommand">
+            <summary>Clears the loaded data.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.FileName">
+            <summary>Loaded data file name for display.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.StatusText">
+            <summary>Status line (row/column counts, errors).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.IsLoading">
+            <summary>Whether a load is in progress.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.Data">
+            <summary>The loaded data, or null.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.ExcelImportViewModel.HasData">
+            <summary>Whether a data file is loaded.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ExcelImportViewModel.LoadFileAsync(System.String)">
+            <summary>
+            Loads the given file, updating status and raising DataLoaded on success.
+            </summary>
+            <param name="filePath">Path to a .xlsx, .xls, or .csv file.</param>
+            <returns>Task completing when the load finishes.</returns>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.ExcelImportViewModel.TestSetData(IDStack.Core.Models.Import.ExcelData)">
+            <summary>Test hook: sets data directly without going through the service.</summary>
+            <param name="data">Data to set.</param>
+        </member>
+        <member name="T:IDStack.ViewModels.DataImport.PhotoImportViewModel">
+            <summary>
+            Loads a photo folder, matches photos to data rows, and reports match coverage.
+            </summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.PhotoImportViewModel.#ctor(IDStack.Core.Interfaces.IPhotoService)">
+            <summary>
+            Creates the photo import view model.
+            </summary>
+            <param name="photoService">Photo service.</param>
+        </member>
+        <member name="E:IDStack.ViewModels.DataImport.PhotoImportViewModel.FolderBrowseRequested">
+            <summary>Raised when the view model wants a folder dialog.</summary>
+        </member>
+        <member name="E:IDStack.ViewModels.DataImport.PhotoImportViewModel.RematchRequested">
+            <summary>Raised when the user asks to re-run matching.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.BrowseFolderCommand">
+            <summary>Browse-for-folder command.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.RematchCommand">
+            <summary>Re-run photo matching command.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.Photos">
+            <summary>All loaded photos.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.FolderPath">
+            <summary>Selected folder path.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.MatchColumnName">
+            <summary>Data column holding photo file names, or empty for name matching.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.StatusText">
+            <summary>Status line (photo/match counts, errors).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.IsLoading">
+            <summary>Whether a folder scan is in progress.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.MatchedCount">
+            <summary>Number of photos matched to at least one row.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.PhotoImportViewModel.HasPhotos">
+            <summary>Whether any photos are loaded.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.PhotoImportViewModel.LoadFolderAsync(System.String)">
+            <summary>
+            Scans the given folder for images.
+            </summary>
+            <param name="path">Folder to scan.</param>
+            <returns>Task completing when the scan finishes.</returns>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.PhotoImportViewModel.MatchToDataAsync(IDStack.Core.Models.Import.ExcelData,System.String)">
+            <summary>
+            Matches loaded photos to data rows using the selected strategy.
+            </summary>
+            <param name="data">Imported data.</param>
+            <param name="keyColumn">
+            Column whose values are matched against photo file names; null uses every string column.
+            </param>
+            <returns>Task completing when matching finishes.</returns>
         </member>
         <member name="T:IDStack.ViewModels.HomeViewModel">
             <summary>
@@ -745,6 +1129,9 @@
         <member name="P:IDStack.ViewModels.TemplateEditor.LayersPanelViewModel.ToggleLockCommand">
             <summary>Toggles element lock (parameter: element).</summary>
         </member>
+        <member name="M:IDStack.ViewModels.TemplateEditor.LayersPanelViewModel.NotifyElementsChanged">
+            <summary>Re-raises change notifications after element mutations.</summary>
+        </member>
         <member name="T:IDStack.ViewModels.TemplateEditor.PropertiesPanelViewModel">
             <summary>
             View model for the context-sensitive properties panel.
@@ -818,6 +1205,15 @@
         </member>
         <member name="E:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.OpenRequested">
             <summary>Raised when the editor requests a file-open dialog.</summary>
+        </member>
+        <member name="E:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.NewRequested">
+            <summary>Raised when the editor requests the new-document dialog.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.Layers">
+            <summary>Panel view model for the layers list.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.Properties">
+            <summary>Panel view model for the properties grid.</summary>
         </member>
         <member name="M:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.#ctor(IDStack.Core.Interfaces.ITemplateService,IDStack.Core.Interfaces.IHistoryService{IDStack.ViewModels.TemplateEditor.EditorState},IDStack.Core.Interfaces.ILocalizationService)">
             <summary>
@@ -947,6 +1343,16 @@
             <summary>Saves the template to the given path.</summary>
             <param name="path">Destination .idcard path.</param>
         </member>
+        <member name="E:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.ElementsChanged">
+            <summary>Wires PropertyChanged for the canvas and panels after collection changes.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.NewDocument(System.Double,System.Double)">
+            <summary>
+            Creates a new empty template with the given card dimensions.
+            </summary>
+            <param name="widthMm">Card width in millimeters.</param>
+            <param name="heightMm">Card height in millimeters.</param>
+        </member>
         <member name="T:IDStack.ViewModels.TemplateEditor.SaveRequestedEventArgs">
             <summary>
             Arguments for the save-requested event raised by the editor.
@@ -1021,6 +1427,27 @@
             <param name="value">New value.</param>
             <param name="propertyName">Property name; defaults to the caller.</param>
             <returns>True when the value changed.</returns>
+        </member>
+        <member name="T:IDStack.Views.DataImport.DataImportView">
+            <summary>
+            Data-import wizard: hosts file/folder dialogs and forwards picks to the view model.
+            </summary>
+            <summary>
+            DataImportView
+            </summary>
+        </member>
+        <member name="M:IDStack.Views.DataImport.DataImportView.#ctor">
+            <summary>
+            Creates the view.
+            </summary>
+        </member>
+        <member name="T:IDStack.Views.DataImport.DataImportView.Win32Window">
+            <summary>Adapter so FolderBrowserDialog can be owned by a WPF window.</summary>
+        </member>
+        <member name="M:IDStack.Views.DataImport.DataImportView.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
         </member>
         <member name="T:IDStack.Views.HomeView">
             <summary>
@@ -1098,23 +1525,47 @@
         </member>
         <member name="T:IDStack.Views.TemplateEditor.CanvasControl">
             <summary>
-            Interactive canvas surface: renders the current side's elements in millimeter
-            scale, supports selection and mouse dragging, and draws a subtle grid.
+            Interactive design surface with a dark surround, card, rulers, grid,
+            selection handles with 8-way resize, drag-move, pan, and zoom-at-cursor.
+            All drawing happens in one OnRender pass; hit testing is model-based.
             </summary>
         </member>
         <member name="M:IDStack.Views.TemplateEditor.CanvasControl.#ctor">
             <summary>
-            Creates the canvas control and wires rendering and input.
+            Creates the canvas control.
             </summary>
         </member>
-        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.Attach(IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel)">
-            <summary>Attaches the canvas to an editor view model.</summary>
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.Attach(IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel,IDStack.Core.Interfaces.ISettingsService)">
+            <summary>
+            Attaches the control to the editor view model and settings.
+            </summary>
             <param name="editor">Editor view model.</param>
+            <param name="settings">Settings service for grid options.</param>
         </member>
-        <member name="P:IDStack.Views.TemplateEditor.CanvasControl.VisualChildrenCount">
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.CenterCard">
+            <summary>Centers the card horizontally and vertically in the viewport.</summary>
+        </member>
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.CenterCard(System.Double,System.Double)">
+            <summary>Centers the card using an explicit viewport size (during arrange).</summary>
+        </member>
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.OnRender(System.Windows.Media.DrawingContext)">
             <inheritdoc />
         </member>
-        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.GetVisualChild(System.Int32)">
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.BeginInlineTextEdit(IDStack.Core.Models.Elements.CanvasElement)">
+            <summary>
+            Opens a borderless TextBox over the element so its text can be edited
+            directly on the canvas, Photoshop-style.
+            </summary>
+        </member>
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.MeasureOverride(System.Windows.Size)">
+            <summary>
+            Fill whatever space is offered — the control draws its own surround,
+            rulers and pan; it is sized by its container, not by content.
+            </summary>
+            <param name="availableSize">Offered size.</param>
+            <returns>The offered finite size, or zero for infinite constraints.</returns>
+        </member>
+        <member name="M:IDStack.Views.TemplateEditor.CanvasControl.ArrangeOverride(System.Windows.Size)">
             <inheritdoc />
         </member>
         <member name="T:IDStack.Views.TemplateEditor.CanvasElementRenderer">
@@ -1137,9 +1588,33 @@
             <param name="element">Source model.</param>
             <param name="scale">Pixels per millimeter.</param>
         </member>
+        <member name="T:IDStack.Views.TemplateEditor.NewDocumentDialog">
+            <summary>
+            Photoshop-style New Document dialog: preset picker with editable size and units.
+            </summary>
+            <summary>
+            NewDocumentDialog
+            </summary>
+        </member>
+        <member name="P:IDStack.Views.TemplateEditor.NewDocumentDialog.WidthMm">
+            <summary>Width in millimeters after OK.</summary>
+        </member>
+        <member name="P:IDStack.Views.TemplateEditor.NewDocumentDialog.HeightMm">
+            <summary>Height in millimeters after OK.</summary>
+        </member>
+        <member name="M:IDStack.Views.TemplateEditor.NewDocumentDialog.#ctor">
+            <summary>
+            Creates the dialog and fills the preset list.
+            </summary>
+        </member>
+        <member name="M:IDStack.Views.TemplateEditor.NewDocumentDialog.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
         <member name="T:IDStack.Views.TemplateEditor.TemplateEditorView">
             <summary>
-            Hosts the interactive canvas and wires shell services (file dialogs) to the editor.
+            Hosts the design surface and wires shell services (dialogs, shortcuts) to the editor.
             </summary>
             <summary>
             TemplateEditorView
@@ -1153,6 +1628,36 @@
         <member name="M:IDStack.Views.TemplateEditor.TemplateEditorView.InitializeComponent">
             <summary>
             InitializeComponent
+            </summary>
+        </member>
+        <member name="T:XamlGeneratedNamespace.GeneratedInternalTypeHelper">
+            <summary>
+            GeneratedInternalTypeHelper
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateInstance(System.Type,System.Globalization.CultureInfo)">
+            <summary>
+            CreateInstance
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.GetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            GetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.SetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            SetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateDelegate(System.Type,System.Object,System.String)">
+            <summary>
+            CreateDelegate
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.AddEventHandler(System.Reflection.EventInfo,System.Object,System.Delegate)">
+            <summary>
+            AddEventHandler
             </summary>
         </member>
     </members>

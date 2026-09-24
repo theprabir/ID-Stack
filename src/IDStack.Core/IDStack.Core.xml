@@ -38,6 +38,51 @@
         <member name="F:IDStack.Core.Constants.UnitConstants.PointsPerInch">
             <summary>Points per inch (typography points).</summary>
         </member>
+        <member name="T:IDStack.Core.Interfaces.IDataValidationService">
+            <summary>
+            Validates imported data before batch generation.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IDataValidationService.Validate(IDStack.Core.Models.Import.ExcelData,System.Collections.Generic.IEnumerable{System.String},System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord})">
+            <summary>Runs all checks over imported data.</summary>
+            <param name="data">Imported rows.</param>
+            <param name="requiredColumns">Columns that must be non-empty.</param>
+            <param name="idColumn">Column checked for duplicates, or null to skip the check.</param>
+            <param name="photos">Photos used for photo-path checking, or null to skip.</param>
+            <returns>All issues found, ordered by row.</returns>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.IExcelService">
+            <summary>
+            Reads tabular data files (.xlsx, .xls, .csv) for card generation.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IExcelService.LoadExcelFileAsync(System.String)">
+            <summary>Loads a data file and returns columns plus all rows.</summary>
+            <param name="filePath">Path to a .xlsx, .xls, or .csv file.</param>
+            <returns>Parsed data.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IExcelService.GetColumnNamesAsync(System.String)">
+            <summary>Reads only the column headers.</summary>
+            <param name="filePath">Path to a data file.</param>
+            <returns>Column names in file order.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IExcelService.GetPreviewAsync(System.String,System.Int32)">
+            <summary>Reads the first rows for preview purposes.</summary>
+            <param name="filePath">Path to a data file.</param>
+            <param name="rowCount">Maximum rows to read.</param>
+            <returns>Parsed preview data.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IExcelService.GetAllRowsAsync(System.String)">
+            <summary>Reads all data rows.</summary>
+            <param name="filePath">Path to a data file.</param>
+            <returns>All rows excluding the header.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IExcelService.ValidateExcelFile(System.String,System.String@)">
+            <summary>Quick structural validation of a data file.</summary>
+            <param name="filePath">Path to check.</param>
+            <param name="errorMessage">Failure reason when the result is false.</param>
+            <returns>True when the file can be loaded.</returns>
+        </member>
         <member name="T:IDStack.Core.Interfaces.IHistoryService`1">
             <summary>
             Generic undo/redo stack for editor snapshots.
@@ -75,6 +120,38 @@
             <summary>Re-applies the next state after an undo.</summary>
             <returns>The restored state.</returns>
         </member>
+        <member name="T:IDStack.Core.Interfaces.IImageProcessingService">
+            <summary>
+            Low-level image operations used by photo import and batch rendering.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IImageProcessingService.ResizeImage(System.Byte[],System.Int32,System.Int32)">
+            <summary>Resizes image bytes to the exact pixel size.</summary>
+            <param name="imageData">Source image bytes (any supported format).</param>
+            <param name="width">Target width in pixels.</param>
+            <param name="height">Target height in pixels.</param>
+            <returns>Resized PNG bytes.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IImageProcessingService.CropImage(System.Byte[],System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>Crops a rectangular region.</summary>
+            <param name="imageData">Source image bytes.</param>
+            <param name="x">Left pixel.</param>
+            <param name="y">Top pixel.</param>
+            <param name="width">Region width in pixels.</param>
+            <param name="height">Region height in pixels.</param>
+            <returns>Cropped PNG bytes.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IImageProcessingService.RotateImage(System.Byte[],System.Double)">
+            <summary>Rotates an image clockwise.</summary>
+            <param name="imageData">Source image bytes.</param>
+            <param name="angle">Angle in degrees (clockwise).</param>
+            <returns>Rotated PNG bytes.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IImageProcessingService.GetImageDimensions(System.Byte[])">
+            <summary>Reads image dimensions without decoding pixels into managed memory.</summary>
+            <param name="imageData">Image bytes.</param>
+            <returns>Width and height in pixels.</returns>
+        </member>
         <member name="T:IDStack.Core.Interfaces.ILocalizationService">
             <summary>
             Provides localized strings for the application UI.
@@ -103,6 +180,58 @@
         <member name="M:IDStack.Core.Interfaces.ILocalizationService.SetLanguage(System.String)">
             <summary>Changes the UI language and persists the choice.</summary>
             <param name="cultureCode">Culture code such as "hi-IN".</param>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.ILogger">
+            <summary>
+            Minimal logging abstraction for diagnostics.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ILogger.Info(System.String)">
+            <summary>Logs an informational message.</summary>
+            <param name="message">Message text.</param>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ILogger.Warn(System.String)">
+            <summary>Logs a warning message.</summary>
+            <param name="message">Message text.</param>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.ILogger.Error(System.Exception,System.String)">
+            <summary>Logs an exception with optional context.</summary>
+            <param name="exception">The exception.</param>
+            <param name="context">Optional context describing where it happened.</param>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.IPhotoService">
+            <summary>
+            Loads photos from folders, matches them to data rows, and prepares them for placement.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IPhotoService.LoadPhotosFromFolderAsync(System.String)">
+            <summary>Scans a folder for supported image files.</summary>
+            <param name="folderPath">Folder to scan (non-recursive).</param>
+            <returns>All photos found, ordered by file name.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IPhotoService.MatchPhotoByNameAsync(System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord})">
+            <summary>Finds the photo whose file name (without extension) equals the given name, case-insensitively.</summary>
+            <param name="name">Name to match.</param>
+            <param name="photos">Candidate photos.</param>
+            <returns>The match, or null.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IPhotoService.MatchPhotoByColumnAsync(System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord},System.String)">
+            <summary>Finds the photo whose file name matches a column's cell value.</summary>
+            <param name="columnValue">Cell text (a file name or key).</param>
+            <param name="photos">Candidate photos.</param>
+            <param name="columnName">Column the value came from (reserved for column-specific rules).</param>
+            <returns>The match, or null.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IPhotoService.ProcessPhotoAsync(IDStack.Core.Models.Import.PhotoRecord,System.Double,System.Double,IDStack.Core.Models.Import.CropMode)">
+            <summary>Resizes and crops a photo to the target size in pixels.</summary>
+            <param name="photo">Photo to process.</param>
+            <param name="targetWidthMm">Target width in millimeters.</param>
+            <param name="targetHeightMm">Target height in millimeters.</param>
+            <param name="cropMode">Crop strategy.</param>
+            <returns>Encoded PNG bytes of the processed image.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IPhotoService.ClearPhotoCache">
+            <summary>Drops all cached processed images.</summary>
         </member>
         <member name="T:IDStack.Core.Interfaces.ISettingsService">
             <summary>
@@ -239,8 +368,24 @@
         <member name="T:IDStack.Core.Models.Elements.CanvasElement">
             <summary>
             Abstract base for all elements placed on a template canvas.
-            Coordinates and sizes are in millimeters.
+            Coordinates and sizes are in millimeters. Raises property-change
+            notifications so editor surfaces can update live.
             </summary>
+        </member>
+        <member name="E:IDStack.Core.Models.Elements.CanvasElement.PropertyChanged">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.CanvasElement.OnPropertyChanged(System.String)">
+            <summary>Raises the property-change event.</summary>
+            <param name="propertyName">Property name.</param>
+        </member>
+        <member name="M:IDStack.Core.Models.Elements.CanvasElement.Set``1(``0@,``0,System.String)">
+            <summary>Sets a field and raises a change notification when the value differs.</summary>
+            <typeparam name="T">Property type.</typeparam>
+            <param name="field">Backing field.</param>
+            <param name="value">New value.</param>
+            <param name="propertyName">Property name.</param>
+            <returns>True when changed.</returns>
         </member>
         <member name="M:IDStack.Core.Models.Elements.CanvasElement.#ctor">
             <summary>Creates an element with a fresh identifier and default CR80-scale geometry.</summary>
@@ -461,6 +606,162 @@
         </member>
         <member name="M:IDStack.Core.Models.Elements.TextElement.Clone">
             <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.Import.ColumnMapping">
+            <summary>
+            Binding between a template placeholder and an Excel column.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.ColumnMapping.#ctor(System.String,System.String)">
+            <summary>Creates a mapping.</summary>
+            <param name="placeholderName">Placeholder name without braces.</param>
+            <param name="columnName">Excel column name, or null when unmapped.</param>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ColumnMapping.PlaceholderName">
+            <summary>Placeholder name this mapping binds (no braces).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ColumnMapping.ColumnName">
+            <summary>Excel column name bound to the placeholder; null when unmapped.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ColumnMapping.IsMapped">
+            <summary>Whether the placeholder is bound to a column.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ColumnMapping.IsRequired">
+            <summary>Whether this placeholder must be mapped before generation.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.CropMode">
+            <summary>
+            How a photo is cropped to fit its placeholder.
+            </summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.CropMode.Fit">
+            <summary>Fit the whole image inside the placeholder (letterbox).</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.CropMode.Center">
+            <summary>Fill the placeholder, cropping overflow symmetrically.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.CropMode.Stretch">
+            <summary>Stretch to the placeholder aspect ratio without cropping.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.DataRow">
+            <summary>
+            One record of imported data: named column values for a single card.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.DataRow.#ctor">
+            <summary>Creates an empty row.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.DataRow.#ctor(System.Collections.Generic.IDictionary{System.String,System.String})">
+            <summary>Creates a row from column/value pairs.</summary>
+            <param name="values">Column name to cell text mapping.</param>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DataRow.RowNumber">
+            <summary>Zero-based row position in the source file (excluding the header).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DataRow.Values">
+            <summary>Column name to cell text mapping (missing cells are empty strings).</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.DataRow.Get(System.String)">
+            <summary>Gets the text of a column or an empty string when absent.</summary>
+            <param name="columnName">Column name (case-insensitive).</param>
+            <returns>Cell text, or empty string.</returns>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.DataRow.GetColumnNames">
+            <summary>Gets the distinct column names across the row.</summary>
+            <returns>Sorted column names.</returns>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.ExcelData">
+            <summary>
+            Result of loading a tabular data file: columns plus all rows.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.ExcelData.#ctor">
+            <summary>Creates empty data.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ExcelData.SourceFilePath">
+            <summary>Source file path the data was loaded from.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ExcelData.Format">
+            <summary>Detected format: xlsx, xls, or csv.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ExcelData.SheetName">
+            <summary>Sheet or table name the data came from.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ExcelData.ColumnNames">
+            <summary>Column headers in file order.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ExcelData.Rows">
+            <summary>All data rows (excluding the header).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ExcelData.RowCount">
+            <summary>Total row count.</summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.PhotoRecord">
+            <summary>
+            A photo discovered in an import folder, with its matched data row.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.PhotoRecord.#ctor(System.String)">
+            <summary>Creates a photo record.</summary>
+            <param name="filePath">Full path to the image file.</param>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.PhotoRecord.FilePath">
+            <summary>Full path to the image file.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.PhotoRecord.FileName">
+            <summary>File name with extension.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.PhotoRecord.FileNameWithoutExtension">
+            <summary>File name without extension — the default matching key.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.PhotoRecord.FileSizeBytes">
+            <summary>File size in bytes.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.PhotoRecord.MatchKey">
+            <summary>Data-row key this photo is matched to (typically a cell value).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.PhotoRecord.IsMatched">
+            <summary>Whether the photo has been matched to a data row.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.PhotoRecord.ToString">
+            <summary>Returns the file name for display.</summary>
+            <returns>The file name.</returns>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.ValidationIssue">
+            <summary>
+            A data-quality problem found during validation.
+            </summary>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.ValidationIssue.SeverityLevel">
+            <summary>Severity of an issue.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.ValidationIssue.SeverityLevel.Info">
+            <summary>Informational only; generation can proceed.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.ValidationIssue.SeverityLevel.Warning">
+            <summary>Potential problem; generation can proceed with care.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.ValidationIssue.SeverityLevel.Error">
+            <summary>Blocking problem; the row should be skipped or fixed.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.ValidationIssue.#ctor(IDStack.Core.Models.Import.ValidationIssue.SeverityLevel,System.Int32,System.String)">
+            <summary>Creates an issue.</summary>
+            <param name="severity">Severity.</param>
+            <param name="rowNumber">Row number, or 0 for file-level issues.</param>
+            <param name="message">Human-readable description.</param>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ValidationIssue.Severity">
+            <summary>How severe the issue is.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ValidationIssue.RowNumber">
+            <summary>Affected row number (1-based), or 0 for file-level issues.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.ValidationIssue.Message">
+            <summary>Human-readable description.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.ValidationIssue.ToString">
+            <summary>Returns the formatted issue text.</summary>
+            <returns>Row-prefixed message.</returns>
         </member>
         <member name="T:IDStack.Core.Models.LanguageInfo">
             <summary>
