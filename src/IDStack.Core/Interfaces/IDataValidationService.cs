@@ -13,11 +13,13 @@ namespace IDStack.Core.Interfaces
         /// <param name="requiredColumns">Columns that must be non-empty.</param>
         /// <param name="idColumn">Column checked for duplicates, or null to skip the check.</param>
         /// <param name="photos">Photos used for photo-path checking, or null to skip.</param>
+        /// <param name="photoMatchColumn">Column holding photo file names; only this column is photo-checked.</param>
         /// <returns>All issues found, ordered by row.</returns>
         List<ValidationIssue> Validate(
             ExcelData data,
             IEnumerable<string> requiredColumns,
             string idColumn,
-            List<PhotoRecord> photos);
+            List<PhotoRecord> photos,
+            string photoMatchColumn = null);
     }
 }

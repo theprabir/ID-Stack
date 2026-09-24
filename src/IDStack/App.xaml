@@ -25,6 +25,8 @@
             <converters:MillimeterToPixelConverter x:Key="MillimeterToPixelConverter" />
             <converters:SideTypeToBoolConverter x:Key="SideTypeToBoolConverter" />
             <converters:BoolToEyeConverter x:Key="BoolToEyeConverter" />
+            <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
+            <converters:BoolToCheckConverter x:Key="BoolToCheckConverter" />
 
             <!-- Navigation: ViewModel -> View mapping -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">

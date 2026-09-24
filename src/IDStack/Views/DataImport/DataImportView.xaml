@@ -13,7 +13,7 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource PageTitleStyle}" Text="Data Import" />
             <TextBlock Style="{StaticResource BodyTextStyle}"
-                       Text="Import Excel/CSV data, map columns to placeholders, match photos, then validate before generation."
+                       Text="① Import design + Excel + photos → ② Map columns and photos to placeholders → ③ Preview and validate."
                        Foreground="{StaticResource TextSecondaryBrush}" />
         </StackPanel>
 
@@ -49,20 +49,35 @@
                     </Setter>
                 </Style>
             </ListBox.Resources>
-            <ListBoxItem Content="1. Excel File" />
-            <ListBoxItem Content="2. Column Mapping" />
-            <ListBoxItem Content="3. Photos" />
-            <ListBoxItem Content="4. Validation" />
+            <ListBoxItem Content="1. Import" />
+            <ListBoxItem Content="2. Mapping" />
+            <ListBoxItem Content="3. Preview &amp; Validate" />
         </ListBox>
 
         <!-- Step content -->
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="16">
             <Grid>
 
-                <!-- Step 0: Excel -->
+                <!-- ======== Step 1: Import (design + Excel + photos) ======== -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              Visibility="{Binding ShowExcelStep, Converter={StaticResource BoolToVisibilityConverter}}">
+                              Visibility="{Binding ShowImportStep, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel Margin="4">
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Card design" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse for design…"
+                                    AutomationProperties.Name="Browse Design"
+                                    Click="OnBrowseDesignClick" MinWidth="160" />
+                            <TextBlock Text="{Binding DesignName}" VerticalAlignment="Center"
+                                       Margin="12,0,0,0" FontWeight="SemiBold" />
+                        </WrapPanel>
+                        <TextBlock Text="Supported: .idcard, .psd. Placeholders are detected automatically."
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,6,0,0" />
+                        <TextBlock Text="{Binding DesignReport}" Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                   Visibility="{Binding DesignReport, Converter={StaticResource NullToCollapsedConverter}}" />
+
+                        <Separator Margin="0,16" />
+
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Excel / CSV data file" />
                         <WrapPanel Margin="0,8,0,0">
                             <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse for data file…"
@@ -75,55 +90,11 @@
                         </WrapPanel>
                         <TextBlock Text="{Binding Excel.StatusText}" Foreground="{StaticResource TextSecondaryBrush}"
                                    Margin="0,8,0,4" />
-
                         <TextBlock Text="Supported: .xlsx, .xls, .csv. The first row must contain column headers."
-                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"
-                                   Margin="0,4,0,0" />
-                    </StackPanel>
-                </ScrollViewer>
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
 
-                <!-- Step 1: Column mapping -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              Visibility="{Binding ShowMappingStep, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel Margin="4">
-                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Map placeholders to columns" />
-                        <TextBlock Text="{Binding Mapping.StatusText}"
-                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,10" />
+                        <Separator Margin="0,16" />
 
-                        <ItemsControl ItemsSource="{Binding Mapping.Mappings}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="30" />
-                                            <ColumnDefinition Width="220" />
-                                            <ColumnDefinition Width="260" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding StatusIcon}"
-                                                   VerticalAlignment="Center" TextAlignment="Center"
-                                                   FontWeight="Bold" />
-                                        <TextBlock Grid.Column="1" Text="{Binding PlaceholderName}"
-                                                   VerticalAlignment="Center" FontWeight="SemiBold" />
-                                        <ComboBox Grid.Column="2" ItemsSource="{Binding AvailableColumns}"
-                                                  SelectedItem="{Binding ColumnName}" Margin="0,0,12,0" />
-                                        <TextBlock Grid.Column="3" Text="{Binding SampleValue}"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <TextBlock Text="⚠ marks a required placeholder that is not mapped yet. Sample values come from the first data row."
-                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,12,0,0" />
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- Step 2: Photos -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              Visibility="{Binding ShowPhotosStep, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <StackPanel Margin="4">
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Photo folder" />
                         <WrapPanel Margin="0,8,0,0">
                             <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse for photo folder…"
@@ -134,54 +105,93 @@
                         </WrapPanel>
                         <TextBlock Text="{Binding Photos.StatusText}"
                                    Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,4" />
-
-                        <Grid Margin="0,12,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="220" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,16,0">
-                                <TextBlock Text="Match photos by column" FontWeight="SemiBold" Margin="0,0,0,4" />
-                                <ComboBox ItemsSource="{Binding Mapping.AvailableColumns}"
-                                          SelectedItem="{Binding Photos.MatchColumnName}" />
-                                <TextBlock Text="Photo file names (without extension) are matched against values in this column."
-                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"
-                                           TextWrapping="Wrap" Margin="0,6,0,0" />
-                                <Button Style="{StaticResource SecondaryButtonStyle}" Content="Match photos to rows"
-                                        AutomationProperties.Name="Match Photos"
-                                        Command="{Binding Photos.RematchCommand}" Margin="0,12,0,0" MinWidth="160"
-                                        HorizontalAlignment="Left" />
-                            </StackPanel>
-                            <ListBox Grid.Column="1" ItemsSource="{Binding Photos.Photos}" MaxHeight="340"
-                                     BorderBrush="{StaticResource BorderBrush}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" Margin="2">
-                                            <TextBlock Text="🖼" Margin="0,0,8,0" />
-                                            <TextBlock Text="{Binding FileName}" />
-                                            <TextBlock Text="{Binding MatchKey, StringFormat='  →  {0}'}"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       Margin="8,0,0,0" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Grid>
+                        <TextBlock Text="Supported: .jpg, .png, .bmp, .tif. Photos are matched to rows by file name."
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Step 3: Validation -->
+                <!-- ======== Step 2: Mapping (auto-detected placeholders) ======== -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
-                              Visibility="{Binding ShowValidationStep, Converter={StaticResource BoolToVisibilityConverter}}">
+                              Visibility="{Binding ShowMappingStep, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel Margin="4">
-                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Validation report" />
-                        <TextBlock Text="{Binding ValidationSummary}" FontWeight="SemiBold" Margin="0,4,0,10" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Detected placeholders" />
+                        <TextBlock Text="Rename a placeholder if its detected name is confusing, then map an Excel column to each text placeholder. Photos map by file name to the chosen column."
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,4,0,10" />
 
-                        <TextBlock Text="ID column for duplicate check:" FontWeight="SemiBold" Margin="0,0,0,4" />
-                        <ComboBox ItemsSource="{Binding Mapping.AvailableColumns}"
-                                  SelectedItem="{Binding IdColumnName}" Width="240" HorizontalAlignment="Left" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="240" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Column="1" Text="Type" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="2" Text="Placeholder (editable)" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="3" Text="Bound column / photo source" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="4" Text="Sample" FontWeight="SemiBold" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding Placeholders}" Margin="0,4,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30" />
+                                            <ColumnDefinition Width="60" />
+                                            <ColumnDefinition Width="220" />
+                                            <ColumnDefinition Width="240" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding IsBound, Converter={StaticResource BoolToCheckConverter}}"
+                                                   VerticalAlignment="Center" FontWeight="Bold" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Kind}" VerticalAlignment="Center"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBox Grid.Column="2" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                 Margin="0,0,12,0" />
+                                        <ComboBox Grid.Column="3" ItemsSource="{Binding DataContext.AvailableColumns, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                  SelectedItem="{Binding BoundColumn}" Margin="0,0,12,0" />
+                                        <TextBlock Grid.Column="4" Text="{Binding SampleText}" VerticalAlignment="Center"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                        <ListBox ItemsSource="{Binding Issues}" MaxHeight="320" Margin="0,12,0,0"
+                        <TextBlock Text="✓ = mapped. Photo matching uses the column chosen below; file names (without extension) are matched against cell values."
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,12,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ======== Step 3: Preview & Validate ======== -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding ShowPreviewStep, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Margin="4">
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Data preview" />
+                        <DataGrid ItemsSource="{Binding PreviewTable}" AutoGenerateColumns="True"
+                                  IsReadOnly="True" CanUserAddRows="False" CanUserResizeRows="False"
+                                  MaxHeight="220" Margin="0,8,0,0"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                  Background="White" BorderBrush="{StaticResource BorderBrush}" />
+
+                        <Separator Margin="0,16" />
+
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Validation" />
+                        <TextBlock Text="{Binding ValidationSummary}" FontWeight="SemiBold" Margin="0,4,0,8" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="ID column for duplicate check:" VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}"
+                                      SelectedItem="{Binding IdColumnName}" Width="220" />
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Content="Re-run validation"
+                                    AutomationProperties.Name="Validate Data"
+                                    Command="{Binding ValidateCommand}" MinWidth="130" Margin="12,0,0,0" />
+                        </StackPanel>
+
+                        <ListBox ItemsSource="{Binding Issues}" MaxHeight="200"
                                  BorderBrush="{StaticResource BorderBrush}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -197,14 +207,22 @@
             </Grid>
         </Border>
 
-        <!-- Footer status -->
+        <!-- Footer: status + navigation -->
         <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="False">
-            <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButtonStyle}" Content="Validate data…"
-                    AutomationProperties.Name="Validate Data"
-                    Command="{Binding ValidateCommand}" MinWidth="130" Margin="12,0,0,0" />
+            <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButtonStyle}" Content="Next: Mapping →"
+                    AutomationProperties.Name="Next Mapping"
+                    Command="{Binding GoToMappingCommand}" MinWidth="140" Margin="8,0,0,0"
+                    Visibility="{Binding ShowImportStep, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" Content="← Back to Import"
+                    Command="{Binding BackToImportCommand}" MinWidth="120"
+                    Visibility="{Binding ShowMappingStep, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButtonStyle}" Content="Next: Preview →"
+                    AutomationProperties.Name="Next Preview"
+                    Command="{Binding GoToPreviewCommand}" MinWidth="140" Margin="8,0,0,0"
+                    Visibility="{Binding ShowMappingStep, Converter={StaticResource BoolToVisibilityConverter}}" />
             <TextBlock DockPanel.Dock="Right" Text="{Binding StatusText}" VerticalAlignment="Center"
                        Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"
-                       MaxWidth="700" />
+                       MaxWidth="620" />
         </DockPanel>
     </Grid>
 </UserControl>

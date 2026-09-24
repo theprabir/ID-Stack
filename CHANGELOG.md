@@ -3,6 +3,50 @@
 All notable changes to **ID Stack** — the ID Card Design & Batch Printing Software by Prabir kumar Das — are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] — Phase 3 Redesign: Design-Driven Data Import (2026-09-24)
+
+Complete rebuild of the Data Import flow around the real user workflow: the design is the source of truth, placeholders are detected from it, and everything is mapped before processing.
+
+### Added
+
+**Photoshop design import:**
+
+- `PsdSharp` 1.0.2 (pure managed, net48-compatible) for reading .psd files without Photoshop
+- `PsdDesignImporter` — converts a PSD into an editable template at 300 DPI print scale: the composite raster is flattened into a background image so the design stays **100% visually identical**, while Photoshop text layers (detected via type-tool tagged blocks `tySh`/`TySh`) become individually editable text elements positioned exactly where Photoshop placed them; a per-layer report is shown after import
+
+**Design import service:**
+
+- `IDesignImportService` / `DesignImportService` — loads .idcard files, imports .psd files, and **auto-detects every mappable placeholder** in the design: text layers → text placeholders, image layers → image placeholders (the flattened design background is excluded); placeholder names come from layer names/text and are guaranteed unique
+
+**Rebuilt Data Import (3 steps matching the workflow):**
+
+- **① Import** — .idcard/.psd design, Excel/CSV sheet, and photo folder together on one screen, each with browse buttons, status lines, and supported-format hints
+- **② Mapping** — placeholders auto-detected from the design are listed with editable names (rename to avoid confusion, duplicates rejected), Excel columns auto-bound to text placeholders by name match, photos auto-matched to rows via a smart photo column picker (prefers PhotoFile/Photo/Image columns), sample values shown
+- **③ Preview & Validate** — data preview grid with one column per Excel header, validation report (missing required values, duplicate IDs, missing photos), ID-column duplicate check, and a "Ready for processing" gate for Phase 4
+- All state lives in the view model (MVVM); the view hosts only dialogs; stale event-handler subscriptions are cleaned up on navigation
+
+### Changed
+
+- `DesignPlaceholder` raises property-change notifications so mapping edits update the UI live
+- Photo validation now checks **only the photo-match column** instead of scanning every column for file-like values (eliminated false "photo not found" warnings on names/emails)
+- `NavigationItem.ToString()` returns the localized display name so UI Automation can address sidebar items reliably
+- Editor view (`TemplateEditorView`) unsubscribes stale singleton view-model events on re-attach, fixing a `NullReferenceException` after navigating away and back
+
+### Fixed
+
+- Data Import no longer auto-jumps to validation after loading a file — the user stays on the current step and navigates with explicit Next/Back buttons
+- Preview grid shows real column data (DataTable-backed) instead of raw object rows
+- Native file dialogs no longer crash after re-entering the page (stale-handler fix)
+
+### Tests
+
+- Rewritten DataImportViewModel tests for the design-driven flow (13 tests covering placeholder detection, uniqueness, auto-bind, rename validation, ready gate) — **124 total, all passing**
+- End-to-end UI test (`tools/scripts/run-dataimport-ui-test.ps1`) drives the real app through all 3 steps with sample data: **12/12 steps pass** with verified screenshots
+
+### Sample data
+
+- `tools/sample-data/` — sample-badge.idcard design, employees.csv (3 rows × 5 columns), photos/ (3 generated PNGs), and a photo-generator project
+
 ## [0.3.0] — Phase 3: Data Import (2026-09-24)
 
 ### Added

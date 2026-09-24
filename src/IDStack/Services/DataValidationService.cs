@@ -18,7 +18,8 @@ namespace IDStack.Services
             ExcelData data,
             IEnumerable<string> requiredColumns,
             string idColumn,
-            List<PhotoRecord> photos)
+            List<PhotoRecord> photos,
+            string photoMatchColumn = null)
         {
             var issues = new List<ValidationIssue>();
 
@@ -36,7 +37,7 @@ namespace IDStack.Services
 
             CheckRequiredColumns(data, requiredColumns, issues);
             CheckDuplicateIds(data, idColumn, issues);
-            CheckPhotoFiles(data, photos, issues);
+            CheckPhotoFiles(data, photos, photoMatchColumn, issues);
 
             return issues
                 .OrderBy(i => i.RowNumber)
@@ -105,9 +106,9 @@ namespace IDStack.Services
         }
 
         private static void CheckPhotoFiles(
-            ExcelData data, List<PhotoRecord> photos, List<ValidationIssue> issues)
+            ExcelData data, List<PhotoRecord> photos, string photoMatchColumn, List<ValidationIssue> issues)
         {
-            if (photos == null)
+            if (photos == null || string.IsNullOrWhiteSpace(photoMatchColumn))
             {
                 return;
             }
@@ -118,20 +119,17 @@ namespace IDStack.Services
 
             foreach (var row in data.Rows)
             {
-                foreach (var column in data.ColumnNames)
+                var value = row.Get(photoMatchColumn);
+                if (value.Length == 0)
                 {
-                    var value = row.Get(column);
-                    if (value.Length == 0 || !LooksLikeFileName(value))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    if (!keys.Contains(Path.GetFileNameWithoutExtension(value)) && !File.Exists(value))
-                    {
-                        issues.Add(new ValidationIssue(
-                            ValidationIssue.SeverityLevel.Warning, row.RowNumber,
-                            "Photo \"" + value + "\" (column \"" + column + "\") was not found in the photo folder."));
-                    }
+                if (!keys.Contains(Path.GetFileNameWithoutExtension(value)) && !File.Exists(value))
+                {
+                    issues.Add(new ValidationIssue(
+                        ValidationIssue.SeverityLevel.Warning, row.RowNumber,
+                        "Photo \"" + value + "\" (column \"" + photoMatchColumn + "\") was not found in the photo folder."));
                 }
             }
         }

@@ -272,5 +272,12 @@ namespace IDStack.ViewModels
 
         /// <summary>Localized display name.</summary>
         public string DisplayName => _localize(TitleKey);
+
+        /// <summary>Returns the localized display name (UI Automation name for the sidebar).</summary>
+        /// <returns>Display name.</returns>
+        public override string ToString()
+        {
+            return DisplayName;
+        }
     }
 }

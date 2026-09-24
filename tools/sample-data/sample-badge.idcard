@@ -1,0 +1,67 @@
+{
+  "Id": "3f2c1a0e-5b7d-4e8a-9c6f-1a2b3c4d5e6f",
+  "Name": "Sample Badge",
+  "Version": "1.0",
+  "CreatedDate": "2026-09-24T09:00:00",
+  "ModifiedDate": "2026-09-24T09:00:00",
+  "FrontSide": {
+    "SideType": 0,
+    "CanvasWidth": 85.6,
+    "CanvasHeight": 54.0,
+    "Elements": [
+      {
+        "ElementType": "Image",
+        "Name": "Design",
+        "Source": "C:\\designs\\sample-badge_assets\\design.png",
+        "Stretch": "Fill",
+        "X": 0.0,
+        "Y": 0.0,
+        "Width": 85.6,
+        "Height": 54.0
+      },
+      {
+        "ElementType": "Text",
+        "Name": "NameLayer",
+        "Text": "Full Name",
+        "FontFamily": "Segoe UI",
+        "FontSize": 10.0,
+        "TextColor": "#000000",
+        "Alignment": "Left",
+        "X": 10.0,
+        "Y": 12.0,
+        "Width": 40.0,
+        "Height": 8.0
+      },
+      {
+        "ElementType": "Text",
+        "Name": "IdLayer",
+        "Text": "ID",
+        "FontFamily": "Segoe UI",
+        "FontSize": 10.0,
+        "TextColor": "#000000",
+        "Alignment": "Left",
+        "X": 10.0,
+        "Y": 22.0,
+        "Width": 25.0,
+        "Height": 6.0
+      },
+      {
+        "ElementType": "Image",
+        "Name": "Photo",
+        "Source": "photo",
+        "Stretch": "Uniform",
+        "X": 60.0,
+        "Y": 8.0,
+        "Width": 20.0,
+        "Height": 25.0
+      }
+    ]
+  },
+  "BackSide": {
+    "SideType": 1,
+    "CanvasWidth": 85.6,
+    "CanvasHeight": 54.0,
+    "Elements": []
+  },
+  "Metadata": {}
+}

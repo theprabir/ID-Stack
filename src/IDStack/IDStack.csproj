@@ -11,7 +11,7 @@
     <RootNamespace>IDStack</RootNamespace>
     <AssemblyName>IDStack</AssemblyName>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.2.0</Version>
+    <Version>0.3.1</Version>
     <Authors>Prabir kumar Das</Authors>
     <Company>Prabir kumar Das</Company>
     <Product>ID Stack</Product>
@@ -20,8 +20,8 @@
     <AssemblyTitle>ID Stack</AssemblyTitle>
     <AssemblyProduct>ID Stack</AssemblyProduct>
     <AssemblyDescription>ID card design and batch printing</AssemblyDescription>
-    <FileVersion>0.2.0</FileVersion>
-    <InformationalVersion>0.2.0</InformationalVersion>
+    <FileVersion>0.3.1</FileVersion>
+    <InformationalVersion>0.3.1</InformationalVersion>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DocumentationFile>$(OutputPath)IDStack.xml</DocumentationFile>
@@ -43,6 +43,7 @@
     <PackageReference Include="EPPlus" Version="4.5.3.3" />
     <PackageReference Include="NPOI" Version="2.6.2" />
     <PackageReference Include="SixLabors.ImageSharp" Version="2.1.4" />
+    <PackageReference Include="PsdSharp" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>

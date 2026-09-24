@@ -43,6 +43,16 @@ namespace IDStack.Views.TemplateEditor
 
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
+            // The editor VM is a singleton re-attached across navigations; keep exactly
+            // one subscription per view so stale handlers never fire on a cleared DataContext.
+            if (_viewModel != null)
+            {
+                _viewModel.SaveRequested -= OnSaveRequested;
+                _viewModel.OpenRequested -= OnOpenRequested;
+                _viewModel.NewRequested -= OnNewRequested;
+                _viewModel = null;
+            }
+
             _viewModel = DataContext as TemplateEditorViewModel;
             if (_viewModel == null)
             {

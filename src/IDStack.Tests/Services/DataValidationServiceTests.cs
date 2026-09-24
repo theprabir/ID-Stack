@@ -101,7 +101,7 @@ namespace IDStack.Tests.Services
             }
 
             var photos = new List<PhotoRecord>();
-            var issues = _service.Validate(data, null, null, photos);
+            var issues = _service.Validate(data, null, null, photos, "Photo");
 
             Assert.AreEqual(2, issues.Count);
             Assert.IsTrue(issues.All(i => i.Severity == ValidationIssue.SeverityLevel.Warning));
@@ -122,7 +122,7 @@ namespace IDStack.Tests.Services
             try
             {
                 var photos = new List<PhotoRecord> { new PhotoRecord(tempPath) };
-                var issues = _service.Validate(data, null, null, photos);
+                var issues = _service.Validate(data, null, null, photos, "Photo");
                 Assert.AreEqual(0, issues.Count);
             }
             finally

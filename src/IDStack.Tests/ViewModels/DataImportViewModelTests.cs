@@ -1,18 +1,23 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using IDStack.Core.Interfaces;
+using IDStack.Core.Models.Elements;
 using IDStack.Core.Models.Import;
 using IDStack.Core.Models.Template;
+using IDStack.Services;
 using IDStack.ViewModels.DataImport;
-using IDStack.ViewModels.TemplateEditor;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
 namespace IDStack.Tests.ViewModels
 {
     /// <summary>
-    /// Tests for the Data Import view models (Excel, mapping, photos, orchestration).
+    /// Tests for the design-based Data Import flow: import design + Excel + photos,
+    /// placeholder auto-detection, mapping, and validation.
     /// </summary>
     [TestClass]
     public class DataImportViewModelTests
@@ -20,7 +25,8 @@ namespace IDStack.Tests.ViewModels
         private Mock<IExcelService> _excelService;
         private Mock<IPhotoService> _photoService;
         private Mock<IDataValidationService> _validationService;
-        private TemplateEditorViewModel _editor;
+        private DesignImportService _designService;
+        private string _tempDir;
 
         [TestInitialize]
         public void Setup()
@@ -28,19 +34,34 @@ namespace IDStack.Tests.ViewModels
             _excelService = new Mock<IExcelService>();
             _photoService = new Mock<IPhotoService>(MockBehavior.Strict);
             _validationService = new Mock<IDataValidationService>();
-            _editor = new TemplateEditorViewModel(
-                new IDStack.Services.TemplateService(),
-                new IDStack.Services.HistoryService<EditorState>(),
-                new Mock<ILocalizationService>().Object);
+            _designService = new DesignImportService(
+                new TemplateService(),
+                new PsdDesignImporter(new Mock<ILogger>().Object),
+                new Mock<ILogger>().Object);
+            _tempDir = Path.Combine(Path.GetTempPath(), "IDStackDataImport_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(_tempDir);
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            try
+            {
+                Directory.Delete(_tempDir, recursive: true);
+            }
+            catch
+            {
+                // Best effort.
+            }
         }
 
         private DataImportViewModel CreateViewModel()
         {
             return new DataImportViewModel(
+                _designService,
                 _excelService.Object,
                 _photoService.Object,
-                _validationService.Object,
-                _editor);
+                _validationService.Object);
         }
 
         private static ExcelData SampleData()
@@ -49,163 +70,223 @@ namespace IDStack.Tests.ViewModels
             {
                 SourceFilePath = @"C:\data\people.xlsx",
                 Format = "xlsx",
-                ColumnNames = new List<string> { "Name", "ID" }
+                ColumnNames = new List<string> { "Full Name", "ID" }
             };
-            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Name"] = "Alice", ["ID"] = "1" }) { RowNumber = 1 });
-            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Name"] = "Bob", ["ID"] = "2" }) { RowNumber = 2 });
+            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Full Name"] = "Alice", ["ID"] = "1" }) { RowNumber = 1 });
+            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Full Name"] = "Bob", ["ID"] = "2" }) { RowNumber = 2 });
             return data;
         }
 
-        [TestMethod]
-        public async Task LoadFileAsync_InvalidFileShowsError()
+        private string WriteDesign(string name, Action<CardTemplate> customize)
         {
-            _excelService
-                .Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny))
-                .Callback(new ValidateCallback((string p, out string m) => m = "bad"))
-                .Returns(false);
-            var vm = CreateViewModel();
-
-            await vm.Excel.LoadFileAsync(@"C:\nope.csv");
-
-            StringAssert.Contains(vm.Excel.StatusText, "bad");
-            Assert.IsNull(vm.Excel.Data);
+            var template = new CardTemplate { Name = name };
+            customize?.Invoke(template);
+            var path = Path.Combine(_tempDir, name + ".idcard");
+            new TemplateService().SaveAsync(template, path).Wait();
+            return path;
         }
 
         [TestMethod]
-        public async Task LoadFileAsync_SuccessPopulatesData()
+        public async Task LoadDesignAsync_IdcardDetectsTextAndImagePlaceholders()
+        {
+            var path = WriteDesign("badge", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Name = "NameLayer", Text = "Full Name" });
+                t.FrontSide.Elements.Add(new TextElement { Name = "IdLayer", Text = "ID" });
+                t.FrontSide.Elements.Add(new ImageElement { Name = "Photo", Source = "x.png" });
+                t.FrontSide.Elements.Add(new ImageElement { Name = "Design", Source = "bg.png" }); // background: not a placeholder
+            });
+            var vm = CreateViewModel();
+
+            await vm.LoadDesignAsync(path);
+
+            Assert.IsTrue(vm.HasDesign);
+            Assert.AreEqual(3, vm.Placeholders.Count);
+            Assert.AreEqual(2, vm.Placeholders.Count(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text));
+            Assert.AreEqual(1, vm.Placeholders.Count(p => p.Kind == DesignPlaceholder.PlaceholderKind.Image));
+        }
+
+        [TestMethod]
+        public async Task LoadDesignAsync_PlaceholderNamesAreUnique()
+        {
+            var path = WriteDesign("dupes", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Name" });
+                t.FrontSide.Elements.Add(new TextElement { Text = "Name" });
+            });
+            var vm = CreateViewModel();
+
+            await vm.LoadDesignAsync(path);
+
+            Assert.AreEqual("Name", vm.Placeholders[0].Name);
+            Assert.AreEqual("Name 2", vm.Placeholders[1].Name);
+        }
+
+        [TestMethod]
+        public async Task LoadDesignAsync_UnsupportedExtensionShowsError()
+        {
+            var vm = CreateViewModel();
+
+            await vm.LoadDesignAsync(@"C:\designs\thing.txt");
+
+            StringAssert.Contains(vm.StatusText, "Unsupported design type");
+            Assert.IsFalse(vm.HasDesign);
+        }
+
+        [TestMethod]
+        public async Task LoadDesignAsync_MissingFileShowsErrorNotThrow()
+        {
+            var vm = CreateViewModel();
+
+            await vm.LoadDesignAsync(Path.Combine(_tempDir, "nope.idcard"));
+
+            StringAssert.Contains(vm.StatusText, "Could not load the design");
+            Assert.IsFalse(vm.HasDesign);
+        }
+
+        [TestMethod]
+        public async Task LoadDesignAsync_SampleTextFilledFromLayerText()
+        {
+            var path = WriteDesign("sample", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Full Name" });
+            });
+            var vm = CreateViewModel();
+
+            await vm.LoadDesignAsync(path);
+
+            Assert.AreEqual("Full Name", vm.Placeholders[0].SampleText);
+        }
+
+        [TestMethod]
+        public async Task ImportExcelFileAsync_PopulatesColumnsAndPreview()
         {
             var data = SampleData();
             _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
             _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>())).ReturnsAsync(data);
             var vm = CreateViewModel();
 
-            await vm.Excel.LoadFileAsync(@"C:\data\people.xlsx");
+            await vm.ImportExcelFileAsync(@"C:\data\people.xlsx");
 
             Assert.IsTrue(vm.Excel.HasData);
-            Assert.AreEqual("people.xlsx", vm.Excel.FileName);
-            StringAssert.Contains(vm.Excel.StatusText, "2 rows");
+            CollectionAssert.AreEqual(new[] { "Full Name", "ID" }, vm.AvailableColumns.ToArray());
+            Assert.AreEqual(2, vm.PreviewTable.Count);
         }
 
         [TestMethod]
-        public async Task LoadFileAsync_EmptyDataShowsMessage()
+        public async Task AutoBind_MatchesPlaceholderNameToColumn()
         {
-            var empty = new ExcelData { ColumnNames = new List<string> { "A" } };
-            _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
-            _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>())).ReturnsAsync(empty);
-            var vm = CreateViewModel();
-
-            await vm.Excel.LoadFileAsync(@"C:\data\empty.xlsx");
-
-            Assert.IsFalse(vm.Excel.HasData);
-            StringAssert.Contains(vm.Excel.StatusText, "no data rows");
-        }
-
-        [TestMethod]
-        public async Task LoadFileAsync_ServiceErrorIsCaught()
-        {
-            _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
-            _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>()))
-                .ThrowsAsync(new InvalidOperationException("corrupt file"));
-            var vm = CreateViewModel();
-
-            await vm.Excel.LoadFileAsync(@"C:\data\bad.xlsx");
-
-            StringAssert.Contains(vm.Excel.StatusText, "corrupt file");
-            Assert.IsFalse(vm.Excel.IsLoading);
-        }
-
-        [TestMethod]
-        public async Task DataLoaded_BuildsMappingWithTemplatePlaceholders()
-        {
+            var designPath = WriteDesign("auto", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Full Name" });
+                t.FrontSide.Elements.Add(new TextElement { Text = "ID" });
+            });
             var data = SampleData();
             _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
             _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>())).ReturnsAsync(data);
-            _editor.AddElement(new Core.Models.Elements.PlaceholderElement { ColumnName = "Name" });
             var vm = CreateViewModel();
-            var mappingChanged = new List<string>();
-            vm.Mapping.Mappings.CollectionChanged += (s, e) => mappingChanged.Add("x");
+            await vm.LoadDesignAsync(designPath);
 
-            await vm.Excel.LoadFileAsync(@"C:\data\people.xlsx");
+            await vm.ImportExcelFileAsync(@"C:\data\people.xlsx");
 
-            Assert.AreEqual(1, vm.Mapping.Mappings.Count);
-            Assert.AreEqual("Name", vm.Mapping.Mappings[0].PlaceholderName);
-            Assert.AreEqual("Name", vm.Mapping.Mappings[0].ColumnName); // auto-matched
-            Assert.AreEqual("Alice", vm.Mapping.Mappings[0].SampleValue);
+            Assert.AreEqual("Full Name", vm.Placeholders[0].BoundColumn);
+            Assert.AreEqual("ID", vm.Placeholders[1].BoundColumn);
+            Assert.IsTrue(vm.ReadyForProcessing);
         }
 
         [TestMethod]
-        public void RunValidation_PopulatesIssuesAndSwitchesStep()
+        public void BindPlaceholder_UnbindsWithNull()
         {
             var vm = CreateViewModel();
-            vm.Excel.TestSetData(SampleData());
-            vm.Mapping.BuildFrom(_editor.Template, vm.Excel.Data);
-            _validationService
-                .Setup(v => v.Validate(It.IsAny<ExcelData>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>(), It.IsAny<List<PhotoRecord>>()))
-                .Returns(new List<ValidationIssue>
-                {
-                    new ValidationIssue(ValidationIssue.SeverityLevel.Warning, 1, "test issue")
-                });
+            var placeholder = new DesignPlaceholder(
+                DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "Name", SideType.Front)
+            {
+                BoundColumn = "Name"
+            };
+
+            vm.BindPlaceholder(placeholder, null);
+
+            Assert.IsFalse(placeholder.IsBound);
+            Assert.IsFalse(vm.ReadyForProcessing);
+        }
+
+        [TestMethod]
+        public void RenamePlaceholder_RejectsDuplicateNames()
+        {
+            var vm = CreateViewModel();
+            var a = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "Name", SideType.Front);
+            var b = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "ID", SideType.Front);
+            vm.Placeholders.Add(a);
+            vm.Placeholders.Add(b);
+
+            vm.RenamePlaceholder(b, "name");
+
+            Assert.AreEqual("ID", b.Name); // rejected, "Name" taken (case-insensitive)
+            StringAssert.Contains(vm.StatusText, "already used");
+        }
+
+        [TestMethod]
+        public void RenamePlaceholder_AcceptsUniqueName()
+        {
+            var vm = CreateViewModel();
+            var a = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "Name", SideType.Front);
+            vm.Placeholders.Add(a);
+
+            vm.RenamePlaceholder(a, "Employee Name");
+
+            Assert.AreEqual("Employee Name", a.Name);
+        }
+
+        [TestMethod]
+        public void RunValidation_NoDataIsNoOp()
+        {
+            var vm = CreateViewModel();
 
             vm.RunValidation();
 
-            Assert.AreEqual(1, vm.Issues.Count);
-            Assert.AreEqual(3, vm.SelectedStep);
-            StringAssert.Contains(vm.StatusText, "warning");
+            Assert.AreEqual(0, vm.Issues.Count);
         }
 
         [TestMethod]
-        public void RunValidation_CleanDataReportsAllValid()
+        public void RunValidation_CleanDataReportsReady()
         {
             var vm = CreateViewModel();
+            var placeholder = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "Full Name", SideType.Front)
+            {
+                BoundColumn = "Full Name"
+            };
+            vm.Placeholders.Add(placeholder);
             vm.Excel.TestSetData(SampleData());
-            vm.Mapping.BuildFrom(_editor.Template, vm.Excel.Data);
             _validationService
-                .Setup(v => v.Validate(It.IsAny<ExcelData>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>(), It.IsAny<List<PhotoRecord>>()))
+                .Setup(v => v.Validate(
+                    It.IsAny<ExcelData>(), It.IsAny<IEnumerable<string>>(), It.IsAny<string>(),
+                    It.IsAny<List<PhotoRecord>>(), It.IsAny<string>()))
                 .Returns(new List<ValidationIssue>());
 
             vm.RunValidation();
 
-            StringAssert.Contains(vm.StatusText, "All 2 rows are valid");
+            StringAssert.Contains(vm.StatusText, "Ready for processing");
+            Assert.IsTrue(vm.ReadyForProcessing);
         }
 
         [TestMethod]
-        public void SelectedStep_StepVisibilityFlagsTrack()
+        public void StepVisibility_ThreeStepsTrack()
         {
             var vm = CreateViewModel();
-
-            vm.SelectedStep = 2;
-            Assert.IsTrue(vm.ShowPhotosStep);
-            Assert.IsFalse(vm.ShowExcelStep);
 
             vm.SelectedStep = 1;
             Assert.IsTrue(vm.ShowMappingStep);
-            Assert.AreEqual(1, vm.SelectedStep);
+            Assert.IsFalse(vm.ShowImportStep);
+
+            vm.SelectedStep = 2;
+            Assert.IsTrue(vm.ShowPreviewStep);
         }
 
         [TestMethod]
-        public void CanGenerate_RequiresDataAndMappedPlaceholders()
-        {
-            var vm = CreateViewModel();
-            Assert.IsFalse(vm.CanGenerate);
-
-            vm.Excel.TestSetData(SampleData());
-            vm.Mapping.BuildFrom(_editor.Template, vm.Excel.Data);
-            Assert.IsTrue(vm.CanGenerate); // no placeholders → nothing required
-        }
-
-        [TestMethod]
-        public void Constructor_NullArgumentsThrow()
+        public void Constructor_NullDesignServiceThrows()
         {
             Assert.ThrowsException<ArgumentNullException>(
-                () => new DataImportViewModel(null, _photoService.Object, _validationService.Object, _editor));
-            Assert.ThrowsException<ArgumentNullException>(
-                () => new DataImportViewModel(_excelService.Object, null, _validationService.Object, _editor));
-            Assert.ThrowsException<ArgumentNullException>(
-                () => new DataImportViewModel(_excelService.Object, _photoService.Object, null, _editor));
-            Assert.ThrowsException<ArgumentNullException>(
-                () => new DataImportViewModel(_excelService.Object, _photoService.Object, _validationService.Object, null));
+                () => new DataImportViewModel(null, _excelService.Object, _photoService.Object, _validationService.Object));
         }
-
-        private delegate void ValidateCallback(string path, out string errorMessage);
     }
 }

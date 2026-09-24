@@ -75,6 +75,8 @@ namespace IDStack
             services.AddSingleton<Core.Interfaces.IImageProcessingService, ImageProcessingService>();
             services.AddSingleton<Core.Interfaces.IPhotoService, PhotoService>();
             services.AddSingleton<Core.Interfaces.IDataValidationService, DataValidationService>();
+            services.AddSingleton<Services.PsdDesignImporter>();
+            services.AddSingleton<Core.Interfaces.IDesignImportService, DesignImportService>();
             services.AddSingleton<ViewModels.DataImport.DataImportViewModel>();
 
             // View models

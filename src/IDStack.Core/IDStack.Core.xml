@@ -43,13 +43,35 @@
             Validates imported data before batch generation.
             </summary>
         </member>
-        <member name="M:IDStack.Core.Interfaces.IDataValidationService.Validate(IDStack.Core.Models.Import.ExcelData,System.Collections.Generic.IEnumerable{System.String},System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord})">
+        <member name="M:IDStack.Core.Interfaces.IDataValidationService.Validate(IDStack.Core.Models.Import.ExcelData,System.Collections.Generic.IEnumerable{System.String},System.String,System.Collections.Generic.List{IDStack.Core.Models.Import.PhotoRecord},System.String)">
             <summary>Runs all checks over imported data.</summary>
             <param name="data">Imported rows.</param>
             <param name="requiredColumns">Columns that must be non-empty.</param>
             <param name="idColumn">Column checked for duplicates, or null to skip the check.</param>
             <param name="photos">Photos used for photo-path checking, or null to skip.</param>
+            <param name="photoMatchColumn">Column holding photo file names; only this column is photo-checked.</param>
             <returns>All issues found, ordered by row.</returns>
+        </member>
+        <member name="T:IDStack.Core.Interfaces.IDesignImportService">
+            <summary>
+            Imports card designs (.idcard or Photoshop .psd) and auto-detects the
+            text and image placeholders inside them for data mapping.
+            </summary>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IDesignImportService.LoadIdcardAsync(System.String)">
+            <summary>Loads a .idcard design file.</summary>
+            <param name="filePath">Path to the design.</param>
+            <returns>The loaded template.</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IDesignImportService.ImportPsdAsync(System.String)">
+            <summary>Imports a Photoshop .psd design and converts it to a template.</summary>
+            <param name="filePath">Path to the .psd file.</param>
+            <returns>The converted template and a per-layer report (PsdImportResult lives in IDStack.Services).</returns>
+        </member>
+        <member name="M:IDStack.Core.Interfaces.IDesignImportService.DetectPlaceholders(IDStack.Core.Models.Template.CardTemplate)">
+            <summary>Detects mappable placeholders (text + image) inside a template.</summary>
+            <param name="template">The design.</param>
+            <returns>All detected placeholders, front side first.</returns>
         </member>
         <member name="T:IDStack.Core.Interfaces.IExcelService">
             <summary>
@@ -669,6 +691,62 @@
         <member name="M:IDStack.Core.Models.Import.DataRow.GetColumnNames">
             <summary>Gets the distinct column names across the row.</summary>
             <returns>Sorted column names.</returns>
+        </member>
+        <member name="T:IDStack.Core.Models.Import.DesignPlaceholder">
+            <summary>
+            A text or image spot in a saved .idcard design that can receive imported data.
+            Detected automatically when the design is loaded; the user renames each one
+            so mapping to Excel columns is unambiguous.
+            </summary>
+        </member>
+        <member name="E:IDStack.Core.Models.Import.DesignPlaceholder.PropertyChanged">
+            <inheritdoc />
+        </member>
+        <member name="T:IDStack.Core.Models.Import.DesignPlaceholder.PlaceholderKind">
+            <summary>Kind of placeholder.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.DesignPlaceholder.PlaceholderKind.Text">
+            <summary>A text layer receiving column text.</summary>
+        </member>
+        <member name="F:IDStack.Core.Models.Import.DesignPlaceholder.PlaceholderKind.Image">
+            <summary>An image layer receiving a matched photo.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.DesignPlaceholder.#ctor(IDStack.Core.Models.Import.DesignPlaceholder.PlaceholderKind,System.Guid,System.String,IDStack.Core.Models.Template.SideType)">
+            <summary>
+            Creates a placeholder referencing an element on a template side.
+            </summary>
+            <param name="kind">Text or Image.</param>
+            <param name="elementId">Element ID inside the design.</param>
+            <param name="suggestedName">Name suggested from the design layer.</param>
+            <param name="side">Front or Back.</param>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.Kind">
+            <summary>Text or Image.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.ElementId">
+            <summary>Element ID inside the design.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.Side">
+            <summary>Front or Back.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.Name">
+            <summary>User-facing name (renameable, must be unique).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.SuggestedName">
+            <summary>Name suggested from the design layer text or layer name.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.SampleText">
+            <summary>Current text content of a text placeholder (sample preview).</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.BoundColumn">
+            <summary>Excel column bound to this placeholder, or null.</summary>
+        </member>
+        <member name="P:IDStack.Core.Models.Import.DesignPlaceholder.IsBound">
+            <summary>Whether a column/photo is bound.</summary>
+        </member>
+        <member name="M:IDStack.Core.Models.Import.DesignPlaceholder.ToString">
+            <summary>Returns the placeholder name for display.</summary>
+            <returns>The name.</returns>
         </member>
         <member name="T:IDStack.Core.Models.Import.ExcelData">
             <summary>

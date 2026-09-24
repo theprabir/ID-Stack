@@ -162,7 +162,7 @@ Found a bug or have a feature request?
 | 6 | Imposition Engine (sheet layout, numbering, print-ready PDF) | ⏳ Not started |
 | 7 | Polish & Production (translations, fonts, installer, final testing) | ⏳ Not started |
 
-**Implemented so far:** Project documentation, license, repository setup, **Phase 1 — Project Foundation**, **Phase 2 — Template Editor** (+ editor hardening), and **Phase 3 — Data Import** (Excel/CSV import, column mapping to placeholders, photo matching, data validation — see [CHANGELOG.md](CHANGELOG.md)).
+**Implemented so far:** Project documentation, license, repository setup, **Phase 1 — Project Foundation**, **Phase 2 — Template Editor** (+ editor hardening), and **Phase 3 — Data Import, redesigned (0.3.1)**: import a Photoshop (.psd) or .idcard design plus Excel and photos, auto-detect text/image placeholders from the design, map columns and photos to them, then preview and validate — ready for processing (see [CHANGELOG.md](CHANGELOG.md)).
 
 **Known issues:** Editor-panel refinements deferred; features will be polished one by one after the remaining phases.
 

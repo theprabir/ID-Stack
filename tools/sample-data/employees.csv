@@ -1,0 +1,4 @@
+Name,EmployeeID,Department,Email,PhotoFile
+Alice Johnson,1001,Engineering,alice@example.com,alice
+Bob Smith,1002,Sales,bob@example.com,bob
+Charmaine Patel,1003,Marketing,charmaine@example.com,charmaine
