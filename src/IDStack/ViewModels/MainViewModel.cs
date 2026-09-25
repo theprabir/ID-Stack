@@ -59,6 +59,7 @@ namespace IDStack.ViewModels
             OpenTemplateLibraryCommand = new RelayCommand(_ => NavigateTo(NavigationKeys.TemplateLibrary));
             OpenSettingsCommand = new RelayCommand(_ => NavigateTo(NavigationKeys.Settings));
             ImportExcelCommand = new RelayCommand(_ => NavigateTo(NavigationKeys.DataImport));
+            ImportPsdCommand = new RelayCommand(_ => NavigateTo(NavigationKeys.TemplateEditor));
         }
 
         /// <summary>Raised when the window should close itself.</summary>
@@ -93,6 +94,9 @@ namespace IDStack.ViewModels
 
         /// <summary>Command starting the Excel import flow.</summary>
         public RelayCommand ImportExcelCommand { get; }
+
+        /// <summary>Command jumping to the editor to import a PSD design.</summary>
+        public RelayCommand ImportPsdCommand { get; }
 
         /// <summary>Application display title.</summary>
         public string AppTitle => _localizationService.GetString("App.Title");

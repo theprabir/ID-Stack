@@ -130,9 +130,33 @@ namespace IDStack.Views.TemplateEditor
 
         private async void OnOpenRequested(object sender, EventArgs e)
         {
+            // UI-test hook: IDSTACK_AUTO_OPEN skips the native dialog.
+            var autoPath = Environment.GetEnvironmentVariable("IDSTACK_AUTO_OPEN");
+            if (!string.IsNullOrEmpty(autoPath))
+            {
+                try
+                {
+                    if (autoPath.EndsWith(".psd", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var importer = (App.Current as App).Services.GetService(typeof(IDStack.Services.PsdDesignImporter))
+                            as IDStack.Services.PsdDesignImporter;
+                        await _viewModel.LoadFromPsdAsync(autoPath, importer).ConfigureAwait(true);
+                    }
+                    else
+                    {
+                        await _viewModel.LoadFromFileAsync(autoPath).ConfigureAwait(true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowError("The design could not be opened: " + ex.Message);
+                }
+                return;
+            }
+
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
-                Filter = "ID Stack Template (*.idcard)|*.idcard|All files (*.*)|*.*",
+                Filter = "Card designs (*.idcard;*.psd)|*.idcard;*.psd|ID Stack design (*.idcard)|*.idcard|Photoshop design (*.psd)|*.psd|All files (*.*)|*.*",
                 Title = "Open Template"
             };
 
@@ -143,11 +167,20 @@ namespace IDStack.Views.TemplateEditor
 
             try
             {
-                await _viewModel.LoadFromFileAsync(dialog.FileName).ConfigureAwait(true);
+                if (dialog.FileName.EndsWith(".psd", StringComparison.OrdinalIgnoreCase))
+                {
+                    var importer = (App.Current as App).Services.GetService(typeof(IDStack.Services.PsdDesignImporter))
+                        as IDStack.Services.PsdDesignImporter;
+                    await _viewModel.LoadFromPsdAsync(dialog.FileName, importer).ConfigureAwait(true);
+                }
+                else
+                {
+                    await _viewModel.LoadFromFileAsync(dialog.FileName).ConfigureAwait(true);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                ShowError("The template file could not be opened.");
+                ShowError("The design could not be opened: " + ex.Message);
             }
         }
 

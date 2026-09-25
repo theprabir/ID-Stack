@@ -197,6 +197,15 @@
         <member name="M:IDStack.Converters.BoolToCheckConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
             <inheritdoc />
         </member>
+        <member name="T:IDStack.Converters.InverseBoolToVisibilityConverter">
+            <summary>Visible when the bound value is false (inverse of BoolToVisibility).</summary>
+        </member>
+        <member name="M:IDStack.Converters.InverseBoolToVisibilityConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
+        <member name="M:IDStack.Converters.InverseBoolToVisibilityConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc />
+        </member>
         <member name="T:IDStack.Converters.SideTypeToBoolConverter">
             <summary>
             Converts a SideType to bool for radio-button binding (ConverterParameter = "Front"/"Back").
@@ -546,6 +555,22 @@
             <param name="psdPath">Path to the .psd file.</param>
             <returns>Import result with template and layer report.</returns>
         </member>
+        <member name="M:IDStack.Services.PsdDesignImporter.IsLayerUsable(PsdSharp.Layer)">
+            <summary>
+            Determines whether a layer should be imported. PsdSharp 1.0.2
+            mis-parses the layer visibility flags (it reports IsVisible=False
+            even for visible layers), so that property cannot be trusted; we
+            import every layer that carries usable pixel data.
+            </summary>
+        </member>
+        <member name="M:IDStack.Services.PsdDesignImporter.RenderCompositeBackground(PsdSharp.PsdFile,System.String,System.Int32,System.Int32)">
+            <summary>
+            Renders the flattened design. The PSD composite (merged image data)
+            is preferred, but many PSDs (e.g. CMYK + Zip compression) crash
+            PsdSharp's composite decoder, so we fall back to flattening the
+            per-layer pixel data ourselves, which decodes reliably.
+            </summary>
+        </member>
         <member name="T:IDStack.Services.SettingsService">
             <summary>
             Persists application settings as JSON under %APPDATA%\IDStack.
@@ -669,13 +694,76 @@
             <summary>Columns the user marked as required and mapped.</summary>
             <returns>Bound column names.</returns>
         </member>
+        <member name="T:IDStack.ViewModels.DataImport.DesignSlotViewModel">
+            <summary>
+            One design slot (Front or Back) in the import step: file, template,
+            detected placeholders, and a live preview thumbnail.
+            </summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DesignSlotViewModel.#ctor(IDStack.Core.Models.Template.SideType,IDStack.Core.Interfaces.IDesignImportService)">
+            <summary>
+            Creates a design slot.
+            </summary>
+            <param name="side">Front or Back.</param>
+            <param name="designService">Design import service.</param>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.Side">
+            <summary>Which side this slot holds.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.Label">
+            <summary>Display label ("Front design" / "Back design").</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.FileName">
+            <summary>Loaded file name for display.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.StatusText">
+            <summary>Status line / import report.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.DesignReport">
+            <summary>Layer-by-layer PSD report (null for .idcard).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.Preview">
+            <summary>Live preview thumbnail of the loaded design.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.HasPreview">
+            <summary>Whether a preview thumbnail is available.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.Placeholders">
+            <summary>Auto-detected placeholders for this side's design.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.Design">
+            <summary>The loaded design template, or null.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.HasDesign">
+            <summary>Whether a design is loaded in this slot.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DesignSlotViewModel.PlaceholderCount">
+            <summary>All placeholders detected on this side.</summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DesignSlotViewModel.LoadAsync(System.String)">
+            <summary>
+            Loads a .idcard or .psd design into this slot and detects placeholders.
+            </summary>
+            <param name="path">Design file path.</param>
+            <returns>Task completing when loaded.</returns>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DesignSlotViewModel.SetPlaceholders(System.Collections.Generic.IEnumerable{IDStack.Core.Models.Import.DesignPlaceholder})">
+            <summary>
+            Replaces the placeholder list (used when merging front/back slots).
+            </summary>
+            <param name="placeholders">New list.</param>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DesignSlotViewModel.LoadPreview">
+            <summary>
+            Renders the design (background + elements) to a live preview.
+            </summary>
+        </member>
         <member name="T:IDStack.ViewModels.DataImport.DataImportViewModel">
             <summary>
-            The data-import flow, exactly as the user works:
-            ① Import the .idcard/psd design, the Excel sheet, and the photo folder.
-            ② App auto-detects every text and image placeholder in the design; the
-               user maps each Excel column to a text placeholder and each photo to
-               an image placeholder (photos are matched by file name automatically).
+            The data-import flow (v0.3.2):
+            ① Import the front design, the back design (optional), ONE Excel sheet,
+               and the photo folder — with live design previews.
+            ② Mapping shows front and back placeholder groups separately.
             ③ Preview the data, validate, and the rows are ready for processing.
             </summary>
         </member>
@@ -689,10 +777,16 @@
             <param name="validationService">Data validation.</param>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Excel">
-            <summary>Excel/CSV data source.</summary>
+            <summary>Excel/CSV data source (one file shared by both sides).</summary>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Photos">
             <summary>Photo folder source.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.FrontDesign">
+            <summary>Front design slot with preview.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.BackDesign">
+            <summary>Back design slot with preview (optional).</summary>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ValidateCommand">
             <summary>Runs data validation.</summary>
@@ -706,6 +800,12 @@
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.GoToPreviewCommand">
             <summary>Advances to the preview/validate step.</summary>
         </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowFrontMappingCommand">
+            <summary>Shows the front-side mapping group.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowBackMappingCommand">
+            <summary>Shows the back-side mapping group.</summary>
+        </member>
         <!-- Badly formed XML comment ignored for member "P:IDStack.ViewModels.DataImport.DataImportViewModel.SelectedStep" -->
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowImportStep">
             <summary>Whether the import step is visible.</summary>
@@ -716,17 +816,17 @@
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowPreviewStep">
             <summary>Whether the preview/validate step is visible.</summary>
         </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowFrontMapping">
+            <summary>Whether the front mapping group is visible (vs back).</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ShowBackMapping">
+            <summary>Whether the back mapping group is visible.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ActivePlaceholders">
+            <summary>Placeholders of the currently visible mapping group.</summary>
+        </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.StatusText">
             <summary>Overall status line.</summary>
-        </member>
-        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.DesignName">
-            <summary>Loaded design display name.</summary>
-        </member>
-        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.DesignReport">
-            <summary>Layer-by-layer report from a PSD import (empty for .idcard).</summary>
-        </member>
-        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Placeholders">
-            <summary>Auto-detected placeholders from the design.</summary>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.AvailableColumns">
             <summary>Excel column names available for mapping.</summary>
@@ -740,17 +840,14 @@
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.IdColumnName">
             <summary>Column treated as the unique card ID for duplicate checking.</summary>
         </member>
-        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.Design">
-            <summary>The loaded design template (null until imported).</summary>
-        </member>
-        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.HasDesign">
-            <summary>Whether a design is loaded.</summary>
+        <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.HasAnyDesign">
+            <summary>Whether at least one design is loaded.</summary>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.IsImportComplete">
-            <summary>Whether all three inputs are loaded.</summary>
+            <summary>Whether all inputs are loaded (back design optional).</summary>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ReadyForProcessing">
-            <summary>Whether the data is ready for processing (all text placeholders mapped).</summary>
+            <summary>Whether the data is ready for processing (all text placeholders on both sides mapped).</summary>
         </member>
         <member name="P:IDStack.ViewModels.DataImport.DataImportViewModel.ValidationSummary">
             <summary>One-line validation summary.</summary>
@@ -762,17 +859,19 @@
             <summary>Raised when Photos wants a folder dialog; the view hosts the dialog.</summary>
         </member>
         <member name="E:IDStack.ViewModels.DataImport.DataImportViewModel.DesignFilePicked">
-            <summary>Raised when the design wants a file dialog; the view hosts the dialog.</summary>
+            <summary>Raised when a design slot wants a file dialog (tag = slot).</summary>
         </member>
-        <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.PickDesign">
-            <summary>Browse for the design file (view shows the dialog).</summary>
+        <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.PickDesign(IDStack.ViewModels.DataImport.DesignSlotViewModel)">
+            <summary>Browse for a design file into the given slot.</summary>
+            <param name="slot">Front or back slot.</param>
         </member>
-        <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.LoadDesignAsync(System.String)">
+        <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.LoadDesignAsync(IDStack.ViewModels.DataImport.DesignSlotViewModel,System.String)">
             <summary>
-            Loads a .idcard or .psd design and auto-detects its placeholders.
+            Loads a design file into the given slot.
             </summary>
+            <param name="slot">Target slot.</param>
             <param name="path">Design file path.</param>
-            <returns>Task completing when the design is loaded.</returns>
+            <returns>Task completing when loaded.</returns>
         </member>
         <member name="M:IDStack.ViewModels.DataImport.DataImportViewModel.ImportExcelFileAsync(System.String)">
             <summary>
@@ -813,6 +912,22 @@
             Auto-binds text placeholders to columns whose names match the
             placeholder name (case-insensitive) — "Full Name" binds to "Name" etc.
             </summary>
+        </member>
+        <member name="T:IDStack.ViewModels.DataImport.DesignPreviewRenderer">
+            <summary>
+            Renders a template side to a small preview bitmap (background + all
+            element visuals), so the import step shows the actual design.
+            </summary>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DesignPreviewRenderer.Render(IDStack.Core.Models.Template.CardTemplate)">
+            <summary>
+            Renders the front side of a template to a frozen preview bitmap.
+            </summary>
+            <param name="template">Loaded design.</param>
+            <returns>Preview bitmap, or null if rendering is not possible.</returns>
+        </member>
+        <member name="M:IDStack.ViewModels.DataImport.DesignPreviewRenderer.MakeBackgroundBrush(IDStack.Core.Models.Template.TemplateSide)">
+            <summary>Builds the side background (color and/or image).</summary>
         </member>
         <member name="T:IDStack.ViewModels.DataImport.ExcelImportViewModel">
             <summary>
@@ -1033,6 +1148,9 @@
         </member>
         <member name="P:IDStack.ViewModels.MainViewModel.ImportExcelCommand">
             <summary>Command starting the Excel import flow.</summary>
+        </member>
+        <member name="P:IDStack.ViewModels.MainViewModel.ImportPsdCommand">
+            <summary>Command jumping to the editor to import a PSD design.</summary>
         </member>
         <member name="P:IDStack.ViewModels.MainViewModel.AppTitle">
             <summary>Application display title.</summary>
@@ -1487,6 +1605,14 @@
             <summary>Loads a template file into the editor.</summary>
             <param name="filePath">Path to a .idcard file.</param>
         </member>
+        <member name="M:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.LoadFromPsdAsync(System.String,IDStack.Services.PsdDesignImporter)">
+            <summary>
+            Imports a Photoshop .psd design into the editor: the composite raster
+            becomes the background and text layers become editable text elements.
+            </summary>
+            <param name="filePath">Path to a .psd file.</param>
+            <param name="importer">PSD converter.</param>
+        </member>
         <member name="M:IDStack.ViewModels.TemplateEditor.TemplateEditorViewModel.SaveToFileAsync(System.String)">
             <summary>Saves the template to the given path.</summary>
             <param name="path">Destination .idcard path.</param>
@@ -1777,6 +1903,36 @@
         <member name="M:IDStack.Views.TemplateEditor.TemplateEditorView.InitializeComponent">
             <summary>
             InitializeComponent
+            </summary>
+        </member>
+        <member name="T:XamlGeneratedNamespace.GeneratedInternalTypeHelper">
+            <summary>
+            GeneratedInternalTypeHelper
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateInstance(System.Type,System.Globalization.CultureInfo)">
+            <summary>
+            CreateInstance
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.GetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            GetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.SetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            SetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateDelegate(System.Type,System.Object,System.String)">
+            <summary>
+            CreateDelegate
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.AddEventHandler(System.Reflection.EventInfo,System.Object,System.Delegate)">
+            <summary>
+            AddEventHandler
             </summary>
         </member>
     </members>

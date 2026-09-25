@@ -1,0 +1,34 @@
+{
+  "Name": "Sample Badge Back",
+  "CardWidthMm": 85.6,
+  "CardHeightMm": 54.0,
+  "FrontSide": {
+    "WidthMm": 85.6,
+    "HeightMm": 54.0,
+    "Background": null,
+    "Elements": [
+      {
+        "ElementType": "Text",
+        "Name": "Terms",
+        "Text": "Terms & Conditions",
+        "X": 8.0,
+        "Y": 8.0,
+        "Width": 69.6,
+        "Height": 10.0,
+        "FontFamily": "Arial",
+        "FontSize": 10.0,
+        "IsBold": false,
+        "IsItalic": false,
+        "Color": "#FF333333",
+        "HorizontalAlignment": "Left",
+        "VerticalAlignment": "Top"
+      }
+    ]
+  },
+  "BackSide": {
+    "WidthMm": 85.6,
+    "HeightMm": 54.0,
+    "Background": null,
+    "Elements": []
+  }
+}

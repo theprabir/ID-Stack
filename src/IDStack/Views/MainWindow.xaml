@@ -24,6 +24,7 @@
                 <MenuItem Header="{Binding MenuOpenTemplateHeader}" Command="{Binding OpenTemplateCommand}"
                           InputGestureText="Ctrl+O" />
                 <Separator />
+                <MenuItem Header="{Binding MenuImportPsdHeader}" Command="{Binding ImportPsdCommand}" />
                 <MenuItem Header="{Binding MenuImportExcelHeader}" Command="{Binding ImportExcelCommand}"
                           InputGestureText="Ctrl+E" />
                 <Separator />
@@ -123,15 +124,15 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Page content -->
-                <ContentControl Content="{Binding CurrentViewModel}" />
-
-                <!-- Status bar -->
+                <!-- Status bar (docked before the filled content so it sits at the bottom) -->
                 <StatusBar DockPanel.Dock="Bottom" Height="26">
                     <StatusBarItem>
                         <TextBlock Text="{Binding StatusText}" />
                     </StatusBarItem>
                 </StatusBar>
+
+                <!-- Page content -->
+                <ContentControl Content="{Binding CurrentViewModel}" />
             </DockPanel>
         </Grid>
     </DockPanel>

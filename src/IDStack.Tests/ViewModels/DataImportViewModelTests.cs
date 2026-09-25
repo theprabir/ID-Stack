@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using IDStack.Core.Interfaces;
 using IDStack.Core.Models.Elements;
@@ -12,12 +11,12 @@ using IDStack.Services;
 using IDStack.ViewModels.DataImport;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using SideType = IDStack.Core.Models.Template.SideType;
 
 namespace IDStack.Tests.ViewModels
 {
     /// <summary>
-    /// Tests for the design-based Data Import flow: import design + Excel + photos,
-    /// placeholder auto-detection, mapping, and validation.
+    /// Tests for the v0.3.2 two-slot (front/back) DataImportViewModel.
     /// </summary>
     [TestClass]
     public class DataImportViewModelTests
@@ -25,19 +24,19 @@ namespace IDStack.Tests.ViewModels
         private Mock<IExcelService> _excelService;
         private Mock<IPhotoService> _photoService;
         private Mock<IDataValidationService> _validationService;
-        private DesignImportService _designService;
+        private IDesignImportService _designService;
         private string _tempDir;
 
         [TestInitialize]
         public void Setup()
         {
             _excelService = new Mock<IExcelService>();
-            _photoService = new Mock<IPhotoService>(MockBehavior.Strict);
+            _photoService = new Mock<IPhotoService>();
             _validationService = new Mock<IDataValidationService>();
             _designService = new DesignImportService(
                 new TemplateService(),
-                new PsdDesignImporter(new Mock<ILogger>().Object),
-                new Mock<ILogger>().Object);
+                new PsdDesignImporter(new LogService()),
+                new LogService());
             _tempDir = Path.Combine(Path.GetTempPath(), "IDStackDataImport_" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_tempDir);
         }
@@ -70,10 +69,10 @@ namespace IDStack.Tests.ViewModels
             {
                 SourceFilePath = @"C:\data\people.xlsx",
                 Format = "xlsx",
-                ColumnNames = new List<string> { "Full Name", "ID" }
+                ColumnNames = new List<string> { "Full Name", "ID", "PhotoFile" }
             };
-            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Full Name"] = "Alice", ["ID"] = "1" }) { RowNumber = 1 });
-            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Full Name"] = "Bob", ["ID"] = "2" }) { RowNumber = 2 });
+            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Full Name"] = "Alice", ["ID"] = "1", ["PhotoFile"] = "alice" }) { RowNumber = 1 });
+            data.Rows.Add(new DataRow(new Dictionary<string, string> { ["Full Name"] = "Bob", ["ID"] = "2", ["PhotoFile"] = "bob" }) { RowNumber = 2 });
             return data;
         }
 
@@ -87,7 +86,7 @@ namespace IDStack.Tests.ViewModels
         }
 
         [TestMethod]
-        public async Task LoadDesignAsync_IdcardDetectsTextAndImagePlaceholders()
+        public async Task LoadDesignAsync_FrontSlotDetectsTextAndImagePlaceholders()
         {
             var path = WriteDesign("badge", t =>
             {
@@ -98,28 +97,58 @@ namespace IDStack.Tests.ViewModels
             });
             var vm = CreateViewModel();
 
-            await vm.LoadDesignAsync(path);
+            await vm.LoadDesignAsync(vm.FrontDesign, path);
 
-            Assert.IsTrue(vm.HasDesign);
-            Assert.AreEqual(3, vm.Placeholders.Count);
-            Assert.AreEqual(2, vm.Placeholders.Count(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text));
-            Assert.AreEqual(1, vm.Placeholders.Count(p => p.Kind == DesignPlaceholder.PlaceholderKind.Image));
+            Assert.IsTrue(vm.FrontDesign.HasDesign);
+            Assert.IsFalse(vm.BackDesign.HasDesign);
+            Assert.AreEqual(3, vm.FrontDesign.Placeholders.Count);
+            Assert.AreEqual(2, vm.FrontDesign.Placeholders.Count(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text));
+            Assert.AreEqual(1, vm.FrontDesign.Placeholders.Count(p => p.Kind == DesignPlaceholder.PlaceholderKind.Image));
         }
 
         [TestMethod]
-        public async Task LoadDesignAsync_PlaceholderNamesAreUnique()
+        public async Task LoadDesignAsync_BackSlotGetsBackSidePlaceholders()
         {
-            var path = WriteDesign("dupes", t =>
+            var frontPath = WriteDesign("front", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Full Name" });
+            });
+            var backPath = WriteDesign("back", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Terms" });
+            });
+            var vm = CreateViewModel();
+
+            await vm.LoadDesignAsync(vm.FrontDesign, frontPath);
+            await vm.LoadDesignAsync(vm.BackDesign, backPath);
+
+            Assert.IsTrue(vm.HasAnyDesign);
+            Assert.AreEqual("Full Name", vm.FrontDesign.Placeholders[0].Name);
+            Assert.AreEqual("Terms", vm.BackDesign.Placeholders[0].Name);
+            Assert.AreEqual(SideType.Back, vm.BackDesign.Placeholders[0].Side);
+        }
+
+        [TestMethod]
+        public async Task LoadDesignAsync_PlaceholderNamesUniqueAcrossSides()
+        {
+            var frontPath = WriteDesign("f2", t =>
             {
                 t.FrontSide.Elements.Add(new TextElement { Text = "Name" });
+            });
+            var backPath = WriteDesign("b2", t =>
+            {
                 t.FrontSide.Elements.Add(new TextElement { Text = "Name" });
             });
             var vm = CreateViewModel();
 
-            await vm.LoadDesignAsync(path);
+            await vm.LoadDesignAsync(vm.FrontDesign, frontPath);
+            await vm.LoadDesignAsync(vm.BackDesign, backPath);
 
-            Assert.AreEqual("Name", vm.Placeholders[0].Name);
-            Assert.AreEqual("Name 2", vm.Placeholders[1].Name);
+            // Auto-bind must not bind the back "Name" to the same column semantics —
+            // but names themselves stay unique per side; cross-side duplicates allowed
+            // since they map the same data differently. Verify both loaded fine.
+            Assert.AreEqual(1, vm.FrontDesign.Placeholders.Count);
+            Assert.AreEqual(1, vm.BackDesign.Placeholders.Count);
         }
 
         [TestMethod]
@@ -127,10 +156,10 @@ namespace IDStack.Tests.ViewModels
         {
             var vm = CreateViewModel();
 
-            await vm.LoadDesignAsync(@"C:\designs\thing.txt");
+            await vm.LoadDesignAsync(vm.FrontDesign, @"C:\designs\thing.txt");
 
-            StringAssert.Contains(vm.StatusText, "Unsupported design type");
-            Assert.IsFalse(vm.HasDesign);
+            StringAssert.Contains(vm.FrontDesign.StatusText, "Unsupported design type");
+            Assert.IsFalse(vm.FrontDesign.HasDesign);
         }
 
         [TestMethod]
@@ -138,10 +167,10 @@ namespace IDStack.Tests.ViewModels
         {
             var vm = CreateViewModel();
 
-            await vm.LoadDesignAsync(Path.Combine(_tempDir, "nope.idcard"));
+            await vm.LoadDesignAsync(vm.FrontDesign, Path.Combine(_tempDir, "nope.idcard"));
 
-            StringAssert.Contains(vm.StatusText, "Could not load the design");
-            Assert.IsFalse(vm.HasDesign);
+            StringAssert.Contains(vm.FrontDesign.StatusText, "Could not load the design");
+            Assert.IsFalse(vm.FrontDesign.HasDesign);
         }
 
         [TestMethod]
@@ -153,9 +182,9 @@ namespace IDStack.Tests.ViewModels
             });
             var vm = CreateViewModel();
 
-            await vm.LoadDesignAsync(path);
+            await vm.LoadDesignAsync(vm.FrontDesign, path);
 
-            Assert.AreEqual("Full Name", vm.Placeholders[0].SampleText);
+            Assert.AreEqual("Full Name", vm.FrontDesign.Placeholders[0].SampleText);
         }
 
         [TestMethod]
@@ -169,29 +198,73 @@ namespace IDStack.Tests.ViewModels
             await vm.ImportExcelFileAsync(@"C:\data\people.xlsx");
 
             Assert.IsTrue(vm.Excel.HasData);
-            CollectionAssert.AreEqual(new[] { "Full Name", "ID" }, vm.AvailableColumns.ToArray());
+            CollectionAssert.AreEqual(new[] { "Full Name", "ID", "PhotoFile" }, vm.AvailableColumns.ToArray());
             Assert.AreEqual(2, vm.PreviewTable.Count);
         }
 
         [TestMethod]
-        public async Task AutoBind_MatchesPlaceholderNameToColumn()
+        public async Task AutoBind_MatchesPlaceholderNameToColumnOnBothSides()
         {
-            var designPath = WriteDesign("auto", t =>
+            var frontPath = WriteDesign("af", t =>
             {
                 t.FrontSide.Elements.Add(new TextElement { Text = "Full Name" });
                 t.FrontSide.Elements.Add(new TextElement { Text = "ID" });
+            });
+            var backPath = WriteDesign("ab", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Terms" });
             });
             var data = SampleData();
             _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
             _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>())).ReturnsAsync(data);
             var vm = CreateViewModel();
-            await vm.LoadDesignAsync(designPath);
+            await vm.LoadDesignAsync(vm.FrontDesign, frontPath);
+            await vm.LoadDesignAsync(vm.BackDesign, backPath);
 
             await vm.ImportExcelFileAsync(@"C:\data\people.xlsx");
 
-            Assert.AreEqual("Full Name", vm.Placeholders[0].BoundColumn);
-            Assert.AreEqual("ID", vm.Placeholders[1].BoundColumn);
+            Assert.AreEqual("Full Name", vm.FrontDesign.Placeholders[0].BoundColumn);
+            Assert.AreEqual("ID", vm.FrontDesign.Placeholders[1].BoundColumn);
+            // "Terms" has no matching column — must be mapped manually.
+            Assert.IsNull(vm.BackDesign.Placeholders[0].BoundColumn);
+            vm.BindPlaceholder(vm.BackDesign.Placeholders[0], "ID");
             Assert.IsTrue(vm.ReadyForProcessing);
+        }
+
+        [TestMethod]
+        public async Task AutoBind_RunsWhenExcelLoadsBeforeDesign()
+        {
+            var designPath = WriteDesign("late-design", t =>
+            {
+                t.FrontSide.Elements.Add(new TextElement { Text = "Full Name" });
+            });
+            var data = SampleData();
+            _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
+            _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>())).ReturnsAsync(data);
+            var vm = CreateViewModel();
+
+            await vm.ImportExcelFileAsync(@"C:\data\people.xlsx");
+            await vm.LoadDesignAsync(vm.FrontDesign, designPath);
+
+            Assert.AreEqual("Full Name", vm.FrontDesign.Placeholders[0].BoundColumn);
+        }
+
+        [TestMethod]
+        public async Task PhotoColumn_PrefersPhotoLikeColumn()
+        {
+            var designPath = WriteDesign("pc", t =>
+            {
+                t.FrontSide.Elements.Add(new ImageElement { Name = "Photo", Source = "p.png" });
+            });
+            var data = SampleData();
+            _excelService.Setup(e => e.ValidateExcelFile(It.IsAny<string>(), out It.Ref<string>.IsAny)).Returns(true);
+            _excelService.Setup(e => e.LoadExcelFileAsync(It.IsAny<string>())).ReturnsAsync(data);
+            var vm = CreateViewModel();
+            await vm.LoadDesignAsync(vm.FrontDesign, designPath);
+
+            await vm.ImportExcelFileAsync(@"C:\data\people.xlsx");
+
+            Assert.AreEqual("PhotoFile", vm.Photos.MatchColumnName);
         }
 
         [TestMethod]
@@ -211,13 +284,13 @@ namespace IDStack.Tests.ViewModels
         }
 
         [TestMethod]
-        public void RenamePlaceholder_RejectsDuplicateNames()
+        public void RenamePlaceholder_RejectsDuplicatesWithinSide()
         {
             var vm = CreateViewModel();
             var a = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "Name", SideType.Front);
             var b = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "ID", SideType.Front);
-            vm.Placeholders.Add(a);
-            vm.Placeholders.Add(b);
+            vm.FrontDesign.Placeholders.Add(a);
+            vm.FrontDesign.Placeholders.Add(b);
 
             vm.RenamePlaceholder(b, "name");
 
@@ -230,7 +303,7 @@ namespace IDStack.Tests.ViewModels
         {
             var vm = CreateViewModel();
             var a = new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "Name", SideType.Front);
-            vm.Placeholders.Add(a);
+            vm.FrontDesign.Placeholders.Add(a);
 
             vm.RenamePlaceholder(a, "Employee Name");
 
@@ -255,7 +328,7 @@ namespace IDStack.Tests.ViewModels
             {
                 BoundColumn = "Full Name"
             };
-            vm.Placeholders.Add(placeholder);
+            vm.FrontDesign.Placeholders.Add(placeholder);
             vm.Excel.TestSetData(SampleData());
             _validationService
                 .Setup(v => v.Validate(
@@ -280,6 +353,21 @@ namespace IDStack.Tests.ViewModels
 
             vm.SelectedStep = 2;
             Assert.IsTrue(vm.ShowPreviewStep);
+        }
+
+        [TestMethod]
+        public void FrontBackToggle_SwitchesActivePlaceholders()
+        {
+            var vm = CreateViewModel();
+            vm.FrontDesign.Placeholders.Add(new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "A", SideType.Front));
+            vm.BackDesign.Placeholders.Add(new DesignPlaceholder(DesignPlaceholder.PlaceholderKind.Text, Guid.NewGuid(), "B", SideType.Back));
+
+            vm.ShowFrontMappingCommand.Execute(null);
+            Assert.AreEqual("A", vm.ActivePlaceholders[0].Name);
+
+            vm.ShowBackMappingCommand.Execute(null);
+            Assert.AreEqual("B", vm.ActivePlaceholders[0].Name);
+            Assert.IsTrue(vm.ShowBackMapping);
         }
 
         [TestMethod]

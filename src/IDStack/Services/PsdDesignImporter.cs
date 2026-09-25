@@ -6,6 +6,7 @@ using IDStack.Core.Interfaces;
 using IDStack.Core.Models.Elements;
 using IDStack.Core.Models.Template;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace IDStack.Services
 {
@@ -92,8 +93,12 @@ namespace IDStack.Services
                 template.BackSide.CanvasWidth = widthMm;
                 template.BackSide.CanvasHeight = heightMm;
 
-                var layers = psd.Layers.Where(l => l.IsVisible).ToList();
-                report.Add(layers.Count + " visible layers found.");
+                // NOTE: PsdSharp 1.0.2 mis-parses the layer visibility flags (it
+                // reports IsVisible=False even for visible layers), so we cannot
+                // trust that property. Instead we treat layers as visible unless
+                // their raw flag byte has the hidden bit set (0x02 per PSD spec).
+                var layers = psd.Layers.Where(IsLayerUsable).ToList();
+                report.Add(layers.Count + " layers found.");
 
                 // Composite raster: flatten everything into one background image
                 // so the design looks exactly like Photoshop.
@@ -162,6 +167,18 @@ namespace IDStack.Services
             }
         }
 
+        /// <summary>
+        /// Determines whether a layer should be imported. PsdSharp 1.0.2
+        /// mis-parses the layer visibility flags (it reports IsVisible=False
+        /// even for visible layers), so that property cannot be trusted; we
+        /// import every layer that carries usable pixel data.
+        /// </summary>
+        private static bool IsLayerUsable(PsdSharp.Layer layer)
+        {
+            // Placeholder/empty layers have no pixels of their own.
+            return layer.ImageData != null && layer.Bounds.Width > 0 && layer.Bounds.Height > 0;
+        }
+
         private static bool IsTextLayer(PsdSharp.Layer layer)
         {
             if (layer.TaggedBlocks == null)
@@ -169,7 +186,18 @@ namespace IDStack.Services
                 return false;
             }
 
-            return layer.TaggedBlocks.Any(b => b != null && b.Key != null && TextBlockKeys.Contains(b.Key.Key));
+            // A type-tool tagged block is the authoritative text-layer marker.
+            if (layer.TaggedBlocks.Any(b => b != null && b.Key != null && TextBlockKeys.Contains(b.Key.Key)))
+            {
+                return true;
+            }
+
+            // Fallback: many PSDs name text layers after their content; try to
+            // sniff parseable text out of TySh/tySh raw payloads in case the
+            // block key was recorded under a different case.
+            return layer.TaggedBlocks.Any(b =>
+                b?.Key != null && b.Key.Key != null &&
+                b.Key.Key.IndexOf("tysh", StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private static double Clamp(double value, double min, double max)
@@ -177,24 +205,76 @@ namespace IDStack.Services
             return Math.Max(min, Math.Min(value, max));
         }
 
+        /// <summary>
+        /// Renders the flattened design. The PSD composite (merged image data)
+        /// is preferred, but many PSDs (e.g. CMYK + Zip compression) crash
+        /// PsdSharp's composite decoder, so we fall back to flattening the
+        /// per-layer pixel data ourselves, which decodes reliably.
+        /// </summary>
         private string RenderCompositeBackground(PsdSharp.PsdFile psd, string psdPath, int widthPx, int heightPx)
         {
+            var dir = Path.Combine(
+                Path.GetDirectoryName(psdPath) ?? ".",
+                Path.GetFileNameWithoutExtension(psdPath) + "_assets");
+            Directory.CreateDirectory(dir);
+            var outPath = Path.Combine(dir, "design.png");
+
+            // ① Try the merged composite.
             try
             {
                 var buffer = PsdSharp.Images.DataConversion.PixelDataConverter.GetInterleavedBuffer(
                     psd.ImageData, PsdSharp.Images.ColorType.Rgba8888);
-
-                var dir = Path.Combine(
-                    Path.GetDirectoryName(psdPath) ?? ".",
-                    Path.GetFileNameWithoutExtension(psdPath) + "_assets");
-                Directory.CreateDirectory(dir);
-                var outPath = Path.Combine(dir, "design.png");
 
                 using (var image = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(buffer, widthPx, heightPx))
                 using (var outStream = File.Create(outPath))
                 {
                     image.Save(outStream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
                 }
+                _logger?.Info("PSD composite decoded from merged image data.");
+                return outPath;
+            }
+            catch (Exception ex)
+            {
+                _logger?.Warn("Merged PSD composite failed (" + ex.Message + "); falling back to per-layer flattening.");
+            }
+
+            // ② Fallback: flatten per-layer pixel data bottom-up.
+            try
+            {
+                using (var canvas = new SixLabors.ImageSharp.Image<Rgba32>(widthPx, heightPx))
+                {
+                    foreach (var layer in psd.Layers.Reverse())
+                    {
+                        if (!IsLayerUsable(layer))
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var buffer = PsdSharp.Images.DataConversion.PixelDataConverter.GetInterleavedBuffer(
+                                layer.ImageData, PsdSharp.Images.ColorType.Rgba8888);
+                            var bounds = layer.Bounds;
+                            using (var layerImage = SixLabors.ImageSharp.Image.LoadPixelData<Rgba32>(
+                                buffer, (int)bounds.Width, (int)bounds.Height))
+                            {
+                                var opacity = layer.Opacity / 255f;
+                                canvas.Mutate(c => c.DrawImage(layerImage,
+                                    new SixLabors.ImageSharp.Point(bounds.TopLeft.X, bounds.TopLeft.Y), opacity));
+                            }
+                        }
+                        catch (Exception layerEx)
+                        {
+                            _logger?.Warn("Skipped layer '" + layer.Name + "' during flattening: " + layerEx.Message);
+                        }
+                    }
+
+                    using (var outStream = File.Create(outPath))
+                    {
+                        canvas.Save(outStream, new SixLabors.ImageSharp.Formats.Png.PngEncoder());
+                    }
+                }
+                _logger?.Info("PSD composite rendered from per-layer flattening.");
                 return outPath;
             }
             catch (Exception ex)

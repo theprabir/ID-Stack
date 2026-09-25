@@ -29,7 +29,8 @@ Built with C# and WPF on .NET Framework 4.8, it runs on Windows 7 SP1 and later 
   - Progress bar with estimated time remaining, pause/resume/cancel
   - Output as PNG (300 DPI), JPG (configurable quality), or PDF; ZIP batch export with Fronts/Backs folder structure
 
-- **PSD Import** — Bring in Photoshop designs; text, image, and shape layers are converted into editable elements
+- Modern **dark theme** UI — editor artboard stays white for design accuracy
+- **PSD Import** — Bring in Photoshop designs; the flattened design becomes the background while text layers become editable text elements
 
 - **Pre-Designed Template Library** — 10–20 ready-made templates for employees, students, events, memberships, visitors, and medical IDs
 
@@ -150,7 +151,7 @@ Found a bug or have a feature request?
 
 ## 📊 Project Status
 
-**Current Phase: Phase 2 — Template Editor (complete)**
+**Current Version: 0.3.2 — PSD Import + Dark Theme**
 
 | Phase | Description | Status |
 |---|---|---|
@@ -162,7 +163,13 @@ Found a bug or have a feature request?
 | 6 | Imposition Engine (sheet layout, numbering, print-ready PDF) | ⏳ Not started |
 | 7 | Polish & Production (translations, fonts, installer, final testing) | ⏳ Not started |
 
-**Implemented so far:** Project documentation, license, repository setup, **Phase 1 — Project Foundation**, **Phase 2 — Template Editor** (+ editor hardening), and **Phase 3 — Data Import, redesigned (0.3.1)**: import a Photoshop (.psd) or .idcard design plus Excel and photos, auto-detect text/image placeholders from the design, map columns and photos to them, then preview and validate — ready for processing (see [CHANGELOG.md](CHANGELOG.md)).
+**Implemented so far:** Project documentation, license, repository setup, **Phase 1 — Project Foundation**, **Phase 2 — Template Editor** (+ editor hardening), and **Phase 3 — Data Import, redesigned (0.3.1 / 0.3.2)**: import a Photoshop (.psd) or .idcard design plus Excel and photos, auto-detect text/image placeholders from the design, map columns and photos to them, then preview and validate — ready for processing (see [CHANGELOG.md](CHANGELOG.md)).
+
+**New in 0.3.2:**
+
+- **PSD import fully working** in both the Template Editor and Data Import: works around PsdSharp's visibility-flag parser bug and renders designs saved as CMYK + Zip via a per-layer flattening fallback; Photoshop text layers become individually editable text elements
+- **Dark theme** across the whole application — the editor canvas artboard stays white for accurate design work
+- Reliable Excel/photo browsing on every visit to the Data Import page, and a properly docked status bar
 
 **Known issues:** Editor-panel refinements deferred; features will be polished one by one after the remaining phases.
 

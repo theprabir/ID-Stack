@@ -13,7 +13,7 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource PageTitleStyle}" Text="Data Import" />
             <TextBlock Style="{StaticResource BodyTextStyle}"
-                       Text="① Import design + Excel + photos → ② Map columns and photos to placeholders → ③ Preview and validate."
+                       Text="① Import front/back designs + Excel + photos → ② Map placeholders per side → ③ Preview and validate."
                        Foreground="{StaticResource TextSecondaryBrush}" />
         </StackPanel>
 
@@ -58,27 +58,75 @@
         <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="16">
             <Grid>
 
-                <!-- ======== Step 1: Import (design + Excel + photos) ======== -->
+                <!-- ======== Step 1: Import (front/back designs + Excel + photos) ======== -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               Visibility="{Binding ShowImportStep, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel Margin="4">
-                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Card design" />
-                        <WrapPanel Margin="0,8,0,0">
-                            <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse for design…"
-                                    AutomationProperties.Name="Browse Design"
-                                    Click="OnBrowseDesignClick" MinWidth="160" />
-                            <TextBlock Text="{Binding DesignName}" VerticalAlignment="Center"
-                                       Margin="12,0,0,0" FontWeight="SemiBold" />
-                        </WrapPanel>
-                        <TextBlock Text="Supported: .idcard, .psd. Placeholders are detected automatically."
-                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,6,0,0" />
-                        <TextBlock Text="{Binding DesignReport}" Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
-                                   Visibility="{Binding DesignReport, Converter={StaticResource NullToCollapsedConverter}}" />
+                        <!-- Designs side by side -->
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Card designs" />
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Front design -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding FrontDesign.Label}" FontWeight="SemiBold" Margin="0,0,0,4" />
+                                <WrapPanel>
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse front…"
+                                            AutomationProperties.Name="Browse Front Design"
+                                            Click="OnBrowseFrontDesignClick" MinWidth="140" />
+                                    <TextBlock Text="{Binding FrontDesign.FileName}" VerticalAlignment="Center"
+                                               Margin="10,0,0,0" FontWeight="SemiBold" />
+                                </WrapPanel>
+                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                        Background="{StaticResource SurfaceHoverBrush}"
+                                        Height="150" Width="240" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                    <Grid>
+                                        <Image Source="{Binding FrontDesign.Preview}" Stretch="Uniform" Margin="4" />
+                                        <TextBlock Text="No design loaded" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Visibility="{Binding FrontDesign.HasDesign, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="{Binding FrontDesign.StatusText}" FontSize="11" TextWrapping="Wrap"
+                                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+
+                            <!-- Back design -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{Binding BackDesign.Label}" FontWeight="SemiBold" Margin="0,0,0,4" />
+                                <WrapPanel>
+                                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse back…"
+                                            AutomationProperties.Name="Browse Back Design"
+                                            Click="OnBrowseBackDesignClick" MinWidth="140" />
+                                    <TextBlock Text="{Binding BackDesign.FileName}" VerticalAlignment="Center"
+                                               Margin="10,0,0,0" FontWeight="SemiBold" />
+                                </WrapPanel>
+                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                                        Background="{StaticResource SurfaceHoverBrush}"
+                                        Height="150" Width="240" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                    <Grid>
+                                        <Image Source="{Binding BackDesign.Preview}" Stretch="Uniform" Margin="4" />
+                                        <TextBlock Text="Optional — no back design" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   Visibility="{Binding BackDesign.HasDesign, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                    </Grid>
+                                </Border>
+                                <TextBlock Text="{Binding BackDesign.StatusText}" FontSize="11" TextWrapping="Wrap"
+                                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Supported: .idcard, .psd. Placeholders are detected automatically. The back design is optional."
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,10,0,0" />
 
                         <Separator Margin="0,16" />
 
-                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Excel / CSV data file" />
+                        <!-- Excel -->
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Excel / CSV data file (shared by both sides)" />
                         <WrapPanel Margin="0,8,0,0">
                             <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse for data file…"
                                     AutomationProperties.Name="Browse Data File"
@@ -95,6 +143,7 @@
 
                         <Separator Margin="0,16" />
 
+                        <!-- Photos -->
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="Photo folder" />
                         <WrapPanel Margin="0,8,0,0">
                             <Button Style="{StaticResource PrimaryButtonStyle}" Content="Browse for photo folder…"
@@ -110,7 +159,7 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- ======== Step 2: Mapping (auto-detected placeholders) ======== -->
+                <!-- ======== Step 2: Mapping (front and back groups separately) ======== -->
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               Visibility="{Binding ShowMappingStep, Converter={StaticResource BoolToVisibilityConverter}}">
                     <StackPanel Margin="4">
@@ -118,23 +167,17 @@
                         <TextBlock Text="Rename a placeholder if its detected name is confusing, then map an Excel column to each text placeholder. Photos map by file name to the chosen column."
                                    Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,4,0,10" />
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="30" />
-                                <ColumnDefinition Width="60" />
-                                <ColumnDefinition Width="220" />
-                                <ColumnDefinition Width="240" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <TextBlock Grid.Column="1" Text="Type" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="2" Text="Placeholder (editable)" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="3" Text="Bound column / photo source" FontWeight="SemiBold" />
-                            <TextBlock Grid.Column="4" Text="Sample" FontWeight="SemiBold" />
-                        </Grid>
-                        <ItemsControl ItemsSource="{Binding Placeholders}" Margin="0,4,0,0">
+                        <!-- Front / Back group toggle -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <RadioButton Content="Front side" AutomationProperties.Name="Front Mapping Tab"
+                                         Command="{Binding ShowFrontMappingCommand}"
+                                         IsChecked="{Binding ShowFrontMapping, Mode=OneWay}" Margin="0,0,12,0" />
+                            <RadioButton Content="Back side" AutomationProperties.Name="Back Mapping Tab"
+                                         Command="{Binding ShowBackMappingCommand}"
+                                         IsChecked="{Binding ShowBackMapping, Mode=OneWay}" />
+                        </StackPanel>
+
+                        <ItemsControl ItemsSource="{Binding ActivePlaceholders}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,4">
@@ -160,7 +203,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <TextBlock Text="✓ = mapped. Photo matching uses the column chosen below; file names (without extension) are matched against cell values."
+                        <TextBlock Text="✓ = mapped. Photo matching uses the column chosen on the import step; file names (without extension) are matched against cell values."
                                    Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,12,0,0" />
                     </StackPanel>
                 </ScrollViewer>

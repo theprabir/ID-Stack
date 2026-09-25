@@ -27,6 +27,7 @@
             <converters:BoolToEyeConverter x:Key="BoolToEyeConverter" />
             <converters:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
             <converters:BoolToCheckConverter x:Key="BoolToCheckConverter" />
+            <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
 
             <!-- Navigation: ViewModel -> View mapping -->
             <DataTemplate DataType="{x:Type vm:HomeViewModel}">

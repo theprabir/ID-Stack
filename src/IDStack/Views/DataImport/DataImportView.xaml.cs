@@ -22,6 +22,16 @@ namespace IDStack.Views.DataImport
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
             Unloaded += OnViewUnloaded;
+            Loaded += OnViewLoaded;
+
+            // If the DataContext was already assigned before this constructor
+            // subscription existed (typical DataTemplate flow), DataContextChanged
+            // will never fire again — attach now or the Excel/photo dialog events
+            // would silently do nothing.
+            if (ViewModel != null)
+            {
+                SubscribeViewModel(ViewModel);
+            }
         }
 
         private DataImportViewModel ViewModel => DataContext as DataImportViewModel;
@@ -30,13 +40,7 @@ namespace IDStack.Views.DataImport
         {
             // The VM is a singleton re-attached across navigations; keep exactly one
             // subscription per view so stale handlers never fire on a cleared DataContext.
-            if (_subscribedViewModel != null)
-            {
-                _subscribedViewModel.ExcelFilePicked -= OnExcelFilePicked;
-                _subscribedViewModel.PhotoFolderPicked -= OnPhotoFolderPicked;
-                _subscribedViewModel.DesignFilePicked -= OnDesignFilePicked;
-                _subscribedViewModel = null;
-            }
+            UnsubscribeViewModel();
 
             var viewModel = ViewModel;
             if (viewModel == null)
@@ -44,13 +48,18 @@ namespace IDStack.Views.DataImport
                 return;
             }
 
+            SubscribeViewModel(viewModel);
+        }
+
+        private void SubscribeViewModel(DataImportViewModel viewModel)
+        {
             viewModel.ExcelFilePicked += OnExcelFilePicked;
             viewModel.PhotoFolderPicked += OnPhotoFolderPicked;
             viewModel.DesignFilePicked += OnDesignFilePicked;
             _subscribedViewModel = viewModel;
         }
 
-        private void OnViewUnloaded(object sender, RoutedEventArgs e)
+        private void UnsubscribeViewModel()
         {
             if (_subscribedViewModel != null)
             {
@@ -61,31 +70,60 @@ namespace IDStack.Views.DataImport
             }
         }
 
-        private void OnDesignFilePicked(object sender, EventArgs e)
+        private void OnViewUnloaded(object sender, RoutedEventArgs e)
+        {
+            UnsubscribeViewModel();
+        }
+
+        private void OnViewLoaded(object sender, RoutedEventArgs e)
+        {
+            // Unloaded detached the handlers when we left the page; re-attach on
+            // every load so navigating back never leaves the dialogs dead.
+            if (ViewModel != null && _subscribedViewModel != ViewModel)
+            {
+                UnsubscribeViewModel();
+                SubscribeViewModel(ViewModel);
+            }
+        }
+
+        private void OnBrowseFrontDesignClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.PickDesign(ViewModel.FrontDesign);
+        }
+
+        private void OnBrowseBackDesignClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel?.PickDesign(ViewModel.BackDesign);
+        }
+
+        private void OnDesignFilePicked(object sender, DesignSlotViewModel slot)
         {
             var viewModel = ViewModel;
-            if (viewModel == null)
+            if (viewModel == null || slot == null)
             {
                 return;
             }
 
-            // UI-test hook: IDSTACK_AUTO_DESIGN skips the native dialog.
-            var autoPath = Environment.GetEnvironmentVariable("IDSTACK_AUTO_DESIGN");
+            // UI-test hook: IDSTACK_AUTO_DESIGN(_BACK) skips the native dialog.
+            var envName = slot.Side == IDStack.Core.Models.Template.SideType.Front
+                ? "IDSTACK_AUTO_DESIGN"
+                : "IDSTACK_AUTO_DESIGN_BACK";
+            var autoPath = Environment.GetEnvironmentVariable(envName);
             if (!string.IsNullOrEmpty(autoPath))
             {
-                _ = viewModel.LoadDesignAsync(autoPath);
+                _ = viewModel.LoadDesignAsync(slot, autoPath);
                 return;
             }
 
             var dialog = new OpenFileDialog
             {
-                Title = "Import card design",
+                Title = "Import card design (" + slot.Label + ")",
                 Filter = "Card designs (*.idcard;*.psd)|*.idcard;*.psd|ID Stack design (*.idcard)|*.idcard|Photoshop design (*.psd)|*.psd"
             };
 
             if (dialog.ShowDialog(GetOwner()) == true)
             {
-                _ = viewModel.LoadDesignAsync(dialog.FileName);
+                _ = viewModel.LoadDesignAsync(slot, dialog.FileName);
             }
         }
 
@@ -154,7 +192,7 @@ namespace IDStack.Views.DataImport
 
         private void OnBrowseDesignClick(object sender, RoutedEventArgs e)
         {
-            ViewModel?.PickDesign();
+            // No longer used: front/back buttons handle design picking.
         }
 
         private Window GetOwner()

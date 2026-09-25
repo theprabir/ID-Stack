@@ -300,11 +300,41 @@ namespace IDStack.ViewModels.TemplateEditor
         public async Task LoadFromFileAsync(string filePath)
         {
             var template = await _templateService.LoadAsync(filePath).ConfigureAwait(true);
+            ApplyLoadedTemplate(template, filePath);
+        }
+
+        /// <summary>
+        /// Imports a Photoshop .psd design into the editor: the composite raster
+        /// becomes the background and text layers become editable text elements.
+        /// </summary>
+        /// <param name="filePath">Path to a .psd file.</param>
+        /// <param name="importer">PSD converter.</param>
+        public Task LoadFromPsdAsync(string filePath, Services.PsdDesignImporter importer)
+        {
+            if (importer == null)
+            {
+                throw new ArgumentNullException(nameof(importer));
+            }
+
+            var result = importer.Import(filePath);
+            ApplyLoadedTemplate(result.Template, filePath);
+            StatusText = "PSD imported: " + result.LayerReport.Count + " report lines.";
+            return Task.CompletedTask;
+        }
+
+        private void ApplyLoadedTemplate(Core.Models.Template.CardTemplate template, string filePath)
+        {
             Template = template;
             FilePath = filePath;
             SelectedSideType = SideType.Front;
             IsModified = false;
             StatusText = "Loaded " + template.Name;
+
+            // The canvas re-hooks element collections only on a CurrentSide change;
+            // swapping the Template object silently replaced CurrentSide, so raise
+            // it explicitly or the canvas keeps rendering the previous (empty) side.
+            OnPropertyChanged(nameof(CurrentSide));
+            OnPropertyChanged(nameof(Elements));
         }
 
         /// <summary>Saves the template to the given path.</summary>

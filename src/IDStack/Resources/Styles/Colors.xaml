@@ -2,29 +2,30 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- Primary palette -->
-    <SolidColorBrush x:Key="PrimaryBrush" Color="#2563EB" />
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#3B82F6" />
     <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#1D4ED8" />
-    <SolidColorBrush x:Key="PrimaryLightBrush" Color="#DBEAFE" />
+    <SolidColorBrush x:Key="PrimaryLightBrush" Color="#1E3A8A" />
 
-    <!-- Neutral palette -->
-    <SolidColorBrush x:Key="BackgroundBrush" Color="#F8FAFC" />
-    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#F1F5F9" />
-    <SolidColorBrush x:Key="BorderBrush" Color="#CBD5E1" />
+    <!-- Neutral palette (dark theme) -->
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#0F172A" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#1E293B" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#334155" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#334155" />
 
     <!-- Text -->
-    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#0F172A" />
-    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#475569" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F1F5F9" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#94A3B8" />
 
     <!-- Status -->
-    <SolidColorBrush x:Key="SuccessBrush" Color="#16A34A" />
-    <SolidColorBrush x:Key="WarningBrush" Color="#D97706" />
-    <SolidColorBrush x:Key="DangerBrush" Color="#DC2626" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#22C55E" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#EF4444" />
 
     <!-- Shell chrome -->
-    <SolidColorBrush x:Key="SidebarBrush" Color="#1E293B" />
-    <SolidColorBrush x:Key="SidebarHoverBrush" Color="#334155" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="#0B1220" />
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="#1E293B" />
     <SolidColorBrush x:Key="SidebarActiveBrush" Color="#2563EB" />
     <SolidColorBrush x:Key="SidebarTextBrush" Color="#E2E8F0" />
+
 
 </ResourceDictionary>

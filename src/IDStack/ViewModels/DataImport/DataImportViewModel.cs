@@ -4,8 +4,10 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 using IDStack.Commands;
 using IDStack.Core.Interfaces;
+using IDStack.Core.Models.Elements;
 using IDStack.Core.Models.Import;
 using IDStack.Core.Models.Template;
 using IDStack.Services;
@@ -13,11 +15,191 @@ using IDStack.Services;
 namespace IDStack.ViewModels.DataImport
 {
     /// <summary>
-    /// The data-import flow, exactly as the user works:
-    /// ① Import the .idcard/psd design, the Excel sheet, and the photo folder.
-    /// ② App auto-detects every text and image placeholder in the design; the
-    ///    user maps each Excel column to a text placeholder and each photo to
-    ///    an image placeholder (photos are matched by file name automatically).
+    /// One design slot (Front or Back) in the import step: file, template,
+    /// detected placeholders, and a live preview thumbnail.
+    /// </summary>
+    public class DesignSlotViewModel : ViewModelBase
+    {
+        private readonly IDesignImportService _designService;
+        private string _fileName;
+        private string _statusText;
+        private string _designReport;
+        private BitmapSource _preview;
+        private ObservableCollection<DesignPlaceholder> _placeholders =
+            new ObservableCollection<DesignPlaceholder>();
+
+        /// <summary>
+        /// Creates a design slot.
+        /// </summary>
+        /// <param name="side">Front or Back.</param>
+        /// <param name="designService">Design import service.</param>
+        public DesignSlotViewModel(SideType side, IDesignImportService designService)
+        {
+            Side = side;
+            _designService = designService ?? throw new ArgumentNullException(nameof(designService));
+            StatusText = "No design loaded.";
+        }
+
+        /// <summary>Which side this slot holds.</summary>
+        public SideType Side { get; }
+
+        /// <summary>Display label ("Front design" / "Back design").</summary>
+        public string Label => Side == SideType.Front ? "Front design" : "Back design";
+
+        /// <summary>Loaded file name for display.</summary>
+        public string FileName
+        {
+            get { return _fileName; }
+            private set { SetProperty(ref _fileName, value); }
+        }
+
+        /// <summary>Status line / import report.</summary>
+        public string StatusText
+        {
+            get { return _statusText; }
+            private set { SetProperty(ref _statusText, value); }
+        }
+
+        /// <summary>Layer-by-layer PSD report (null for .idcard).</summary>
+        public string DesignReport
+        {
+            get { return _designReport; }
+            private set { SetProperty(ref _designReport, value); }
+        }
+
+        /// <summary>Live preview thumbnail of the loaded design.</summary>
+        public BitmapSource Preview
+        {
+            get { return _preview; }
+            private set { SetProperty(ref _preview, value); }
+        }
+
+        /// <summary>Whether a preview thumbnail is available.</summary>
+        public bool HasPreview => Preview != null;
+
+        /// <summary>Auto-detected placeholders for this side's design.</summary>
+        public ObservableCollection<DesignPlaceholder> Placeholders => _placeholders;
+
+        /// <summary>The loaded design template, or null.</summary>
+        public CardTemplate Design { get; private set; }
+
+        /// <summary>Whether a design is loaded in this slot.</summary>
+        public bool HasDesign => Design != null;
+
+        /// <summary>All placeholders detected on this side.</summary>
+        public int PlaceholderCount => _placeholders.Count;
+
+        /// <summary>
+        /// Loads a .idcard or .psd design into this slot and detects placeholders.
+        /// </summary>
+        /// <param name="path">Design file path.</param>
+        /// <returns>Task completing when loaded.</returns>
+        public async Task LoadAsync(string path)
+        {
+            try
+            {
+                var extension = Path.GetExtension(path).ToLowerInvariant();
+                CardTemplate template;
+                if (extension == ".psd")
+                {
+                    var result = await _designService.ImportPsdAsync(path).ConfigureAwait(true);
+                    var psdResult = (PsdImportResult)result;
+                    template = psdResult.Template;
+                    DesignReport = string.Join(Environment.NewLine, psdResult.LayerReport);
+                }
+                else if (extension == ".idcard")
+                {
+                    template = await _designService.LoadIdcardAsync(path).ConfigureAwait(true);
+                    DesignReport = null;
+                }
+                else
+                {
+                    StatusText = "Unsupported design type \"" + extension + "\". Use .idcard or .psd.";
+                    return;
+                }
+
+                Design = template;
+                FileName = Path.GetFileName(path);
+
+                var detected = _designService.DetectPlaceholders(Design);
+                if (Side == SideType.Front)
+                {
+                    // The front slot template contains the front elements.
+                    detected = detected.Where(p => p.Side == SideType.Front).ToList();
+                }
+                else
+                {
+                    // For the back slot, detect from its own template's front side
+                    // (the back design is authored as a standalone file).
+                    detected = detected.Where(p => p.Side == SideType.Front)
+                        .Select(p => new DesignPlaceholder(p.Kind, p.ElementId, p.SuggestedName, SideType.Back))
+                        .ToList();
+                }
+
+                _placeholders.Clear();
+                foreach (var placeholder in detected)
+                {
+                    _placeholders.Add(placeholder);
+                }
+
+                LoadPreview();
+                StatusText = _placeholders.Count + " placeholders detected.";
+                OnPropertyChanged(nameof(HasDesign));
+                OnPropertyChanged(nameof(PlaceholderCount));
+            }
+            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException ||
+                                       ex is UnauthorizedAccessException ||
+                                       ex is Newtonsoft.Json.JsonSerializationException ||
+                                       ex is FileNotFoundException || ex is NotSupportedException)
+            {
+                Design = null;
+                FileName = null;
+                Preview = null;
+                StatusText = "Could not load the design: " + ex.Message;
+                OnPropertyChanged(nameof(HasDesign));
+            }
+        }
+
+        /// <summary>
+        /// Replaces the placeholder list (used when merging front/back slots).
+        /// </summary>
+        /// <param name="placeholders">New list.</param>
+        public void SetPlaceholders(IEnumerable<DesignPlaceholder> placeholders)
+        {
+            _placeholders.Clear();
+            foreach (var placeholder in placeholders)
+            {
+                _placeholders.Add(placeholder);
+            }
+
+            OnPropertyChanged(nameof(PlaceholderCount));
+        }
+
+        /// <summary>
+        /// Renders the design (background + elements) to a live preview.
+        /// </summary>
+        private void LoadPreview()
+        {
+            try
+            {
+                Preview = DesignPreviewRenderer.Render(Design);
+            }
+            catch
+            {
+                Preview = null;
+            }
+            finally
+            {
+                OnPropertyChanged(nameof(HasPreview));
+            }
+        }
+    }
+
+    /// <summary>
+    /// The data-import flow (v0.3.2):
+    /// ① Import the front design, the back design (optional), ONE Excel sheet,
+    ///    and the photo folder — with live design previews.
+    /// ② Mapping shows front and back placeholder groups separately.
     /// ③ Preview the data, validate, and the rows are ready for processing.
     /// </summary>
     public class DataImportViewModel : ViewModelBase
@@ -27,14 +209,11 @@ namespace IDStack.ViewModels.DataImport
 
         private int _selectedStep;
         private string _statusText;
-        private string _designName;
-        private ObservableCollection<DesignPlaceholder> _placeholders = new ObservableCollection<DesignPlaceholder>();
-        private ObservableCollection<DataRow> _previewRows = new ObservableCollection<DataRow>();
         private System.Data.DataView _previewTable;
         private ObservableCollection<ValidationIssue> _issues = new ObservableCollection<ValidationIssue>();
         private ObservableCollection<string> _availableColumns = new ObservableCollection<string>();
         private string _idColumnName;
-        private string _designReport;
+        private bool _showFrontMapping = true;
 
         /// <summary>
         /// Creates the data import view model.
@@ -54,6 +233,8 @@ namespace IDStack.ViewModels.DataImport
 
             Excel = new ExcelImportViewModel(excelService);
             Photos = new PhotoImportViewModel(photoService);
+            FrontDesign = new DesignSlotViewModel(SideType.Front, designService);
+            BackDesign = new DesignSlotViewModel(SideType.Back, designService);
 
             Excel.ImportRequested += (s, e) => ExcelFilePicked?.Invoke(this, EventArgs.Empty);
             Excel.DataLoaded += (s, e) => OnExcelLoaded();
@@ -68,18 +249,26 @@ namespace IDStack.ViewModels.DataImport
             };
 
             ValidateCommand = new RelayCommand(_ => RunValidation(), _ => Excel.HasData);
-            GoToMappingCommand = new RelayCommand(_ => SelectedStep = 1, _ => HasDesign);
+            GoToMappingCommand = new RelayCommand(_ => { SelectedStep = 1; ShowFrontMapping = true; }, _ => HasAnyDesign);
             BackToImportCommand = new RelayCommand(_ => SelectedStep = 0);
-            GoToPreviewCommand = new RelayCommand(_ => { RunValidation(); SelectedStep = 2; }, _ => HasDesign && Excel.HasData);
+            GoToPreviewCommand = new RelayCommand(_ => { RunValidation(); SelectedStep = 2; }, _ => HasAnyDesign && Excel.HasData);
+            ShowFrontMappingCommand = new RelayCommand(_ => ShowFrontMapping = true);
+            ShowBackMappingCommand = new RelayCommand(_ => ShowFrontMapping = false);
 
-            StatusText = "Import the design (.idcard or .psd), the Excel sheet, and the photo folder to begin.";
+            StatusText = "Import the front design, back design (optional), the Excel sheet, and the photo folder.";
         }
 
-        /// <summary>Excel/CSV data source.</summary>
+        /// <summary>Excel/CSV data source (one file shared by both sides).</summary>
         public ExcelImportViewModel Excel { get; }
 
         /// <summary>Photo folder source.</summary>
         public PhotoImportViewModel Photos { get; }
+
+        /// <summary>Front design slot with preview.</summary>
+        public DesignSlotViewModel FrontDesign { get; }
+
+        /// <summary>Back design slot with preview (optional).</summary>
+        public DesignSlotViewModel BackDesign { get; }
 
         /// <summary>Runs data validation.</summary>
         public RelayCommand ValidateCommand { get; }
@@ -92,6 +281,12 @@ namespace IDStack.ViewModels.DataImport
 
         /// <summary>Advances to the preview/validate step.</summary>
         public RelayCommand GoToPreviewCommand { get; }
+
+        /// <summary>Shows the front-side mapping group.</summary>
+        public RelayCommand ShowFrontMappingCommand { get; }
+
+        /// <summary>Shows the back-side mapping group.</summary>
+        public RelayCommand ShowBackMappingCommand { get; }
 
         /// <summary>Selected step: 0 Import, 1 Mapping, 2 Preview & Validate.</summary>
         public int SelectedStep
@@ -117,29 +312,32 @@ namespace IDStack.ViewModels.DataImport
         /// <summary>Whether the preview/validate step is visible.</summary>
         public bool ShowPreviewStep => SelectedStep == 2;
 
+        /// <summary>Whether the front mapping group is visible (vs back).</summary>
+        public bool ShowFrontMapping
+        {
+            get { return _showFrontMapping; }
+            set
+            {
+                if (SetProperty(ref _showFrontMapping, value))
+                {
+                    OnPropertyChanged(nameof(ShowBackMapping));
+                }
+            }
+        }
+
+        /// <summary>Whether the back mapping group is visible.</summary>
+        public bool ShowBackMapping => !ShowFrontMapping;
+
+        /// <summary>Placeholders of the currently visible mapping group.</summary>
+        public ObservableCollection<DesignPlaceholder> ActivePlaceholders =>
+            ShowFrontMapping ? FrontDesign.Placeholders : BackDesign.Placeholders;
+
         /// <summary>Overall status line.</summary>
         public string StatusText
         {
             get { return _statusText; }
             private set { SetProperty(ref _statusText, value); }
         }
-
-        /// <summary>Loaded design display name.</summary>
-        public string DesignName
-        {
-            get { return _designName; }
-            private set { SetProperty(ref _designName, value); }
-        }
-
-        /// <summary>Layer-by-layer report from a PSD import (empty for .idcard).</summary>
-        public string DesignReport
-        {
-            get { return _designReport; }
-            private set { SetProperty(ref _designReport, value); }
-        }
-
-        /// <summary>Auto-detected placeholders from the design.</summary>
-        public ObservableCollection<DesignPlaceholder> Placeholders => _placeholders;
 
         /// <summary>Excel column names available for mapping.</summary>
         public ObservableCollection<string> AvailableColumns => _availableColumns;
@@ -165,19 +363,17 @@ namespace IDStack.ViewModels.DataImport
             set { SetProperty(ref _idColumnName, value); }
         }
 
-        /// <summary>The loaded design template (null until imported).</summary>
-        public CardTemplate Design { get; private set; }
+        /// <summary>Whether at least one design is loaded.</summary>
+        public bool HasAnyDesign => FrontDesign.HasDesign || BackDesign.HasDesign;
 
-        /// <summary>Whether a design is loaded.</summary>
-        public bool HasDesign => Design != null;
+        /// <summary>Whether all inputs are loaded (back design optional).</summary>
+        public bool IsImportComplete => HasAnyDesign && Excel.HasData && Photos.HasPhotos;
 
-        /// <summary>Whether all three inputs are loaded.</summary>
-        public bool IsImportComplete => HasDesign && Excel.HasData && Photos.HasPhotos;
-
-        /// <summary>Whether the data is ready for processing (all text placeholders mapped).</summary>
-        public bool ReadyForProcessing => Excel.HasData && Placeholders.Count > 0 &&
-                                          Placeholders.Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text)
-                                              .All(p => p.IsBound);
+        /// <summary>Whether the data is ready for processing (all text placeholders on both sides mapped).</summary>
+        public bool ReadyForProcessing => Excel.HasData &&
+                                          FrontDesign.Placeholders.Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text).All(p => p.IsBound) &&
+                                          BackDesign.Placeholders.Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text).All(p => p.IsBound) &&
+                                          (FrontDesign.Placeholders.Any() || BackDesign.Placeholders.Any());
 
         /// <summary>One-line validation summary.</summary>
         public string ValidationSummary => StatusText;
@@ -188,68 +384,32 @@ namespace IDStack.ViewModels.DataImport
         /// <summary>Raised when Photos wants a folder dialog; the view hosts the dialog.</summary>
         public event EventHandler PhotoFolderPicked;
 
-        /// <summary>Raised when the design wants a file dialog; the view hosts the dialog.</summary>
-        public event EventHandler DesignFilePicked;
+        /// <summary>Raised when a design slot wants a file dialog (tag = slot).</summary>
+        public event EventHandler<DesignSlotViewModel> DesignFilePicked;
 
-        /// <summary>Browse for the design file (view shows the dialog).</summary>
-        public void PickDesign()
+        /// <summary>Browse for a design file into the given slot.</summary>
+        /// <param name="slot">Front or back slot.</param>
+        public void PickDesign(DesignSlotViewModel slot)
         {
-            DesignFilePicked?.Invoke(this, EventArgs.Empty);
+            DesignFilePicked?.Invoke(this, slot);
         }
 
         /// <summary>
-        /// Loads a .idcard or .psd design and auto-detects its placeholders.
+        /// Loads a design file into the given slot.
         /// </summary>
+        /// <param name="slot">Target slot.</param>
         /// <param name="path">Design file path.</param>
-        /// <returns>Task completing when the design is loaded.</returns>
-        public async Task LoadDesignAsync(string path)
+        /// <returns>Task completing when loaded.</returns>
+        public async Task LoadDesignAsync(DesignSlotViewModel slot, string path)
         {
             StatusText = "Loading design…";
-            try
-            {
-                var extension = System.IO.Path.GetExtension(path).ToLowerInvariant();
-                if (extension == ".psd")
-                {
-                    var result = await _designService.ImportPsdAsync(path).ConfigureAwait(true);
-                    var psdResult = (PsdImportResult)result;
-                    Design = psdResult.Template;
-                    DesignReport = string.Join(Environment.NewLine, psdResult.LayerReport);
-                }
-                else if (extension == ".idcard")
-                {
-                    Design = await _designService.LoadIdcardAsync(path).ConfigureAwait(true);
-                    DesignReport = null;
-                }
-                else
-                {
-                    StatusText = "Unsupported design type \"" + extension + "\". Use .idcard or .psd.";
-                    return;
-                }
+            await slot.LoadAsync(path).ConfigureAwait(true);
 
-                DesignName = System.IO.Path.GetFileName(path);
-
-                var detected = _designService.DetectPlaceholders(Design);
-                Placeholders.Clear();
-                foreach (var placeholder in detected)
-                {
-                    Placeholders.Add(placeholder);
-                }
-
-                AutoBindByName();
-                RebuildPreview();
-                UpdateStatus();
-                OnPropertyChanged(nameof(HasDesign));
-                OnPropertyChanged(nameof(ReadyForProcessing));
-            }
-            catch (Exception ex) when (ex is IOException || ex is InvalidOperationException ||
-                                       ex is UnauthorizedAccessException || ex is Newtonsoft.Json.JsonSerializationException ||
-                                       ex is FileNotFoundException || ex is NotSupportedException)
-            {
-                Design = null;
-                DesignName = null;
-                StatusText = "Could not load the design: " + ex.Message;
-                OnPropertyChanged(nameof(HasDesign));
-            }
+            AutoBindByName();
+            UpdateStatus();
+            OnPropertyChanged(nameof(HasAnyDesign));
+            OnPropertyChanged(nameof(ReadyForProcessing));
+            OnPropertyChanged(nameof(ActivePlaceholders));
         }
 
         /// <summary>
@@ -286,7 +446,8 @@ namespace IDStack.ViewModels.DataImport
                 return;
             }
 
-            var required = Placeholders
+            var required = FrontDesign.Placeholders
+                .Concat(BackDesign.Placeholders)
                 .Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text && p.IsBound)
                 .Select(p => p.BoundColumn)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -332,7 +493,8 @@ namespace IDStack.ViewModels.DataImport
             }
 
             var trimmed = name.Trim();
-            if (Placeholders.Any(p => p != placeholder &&
+            var all = FrontDesign.Placeholders.Concat(BackDesign.Placeholders);
+            if (all.Any(p => p != placeholder &&
                 string.Equals(p.Name, trimmed, StringComparison.OrdinalIgnoreCase)))
             {
                 StatusText = "The name \"" + trimmed + "\" is already used by another placeholder.";
@@ -407,12 +569,13 @@ namespace IDStack.ViewModels.DataImport
         /// </summary>
         private void AutoBindByName()
         {
-            if (Excel.Data == null || Placeholders.Count == 0)
+            if (Excel.Data == null)
             {
                 return;
             }
 
-            foreach (var placeholder in Placeholders.Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text))
+            foreach (var placeholder in FrontDesign.Placeholders.Concat(BackDesign.Placeholders)
+                         .Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Text))
             {
                 var match = Excel.Data.ColumnNames.FirstOrDefault(c =>
                     string.Equals(c, placeholder.Name, StringComparison.OrdinalIgnoreCase)) ??
@@ -425,9 +588,8 @@ namespace IDStack.ViewModels.DataImport
 
         private void RebindImagePlaceholders()
         {
-            // Image placeholders consume the photo mapping from PhotoService;
-            // their BoundColumn holds the match-column name for the report.
-            foreach (var placeholder in Placeholders.Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Image))
+            foreach (var placeholder in FrontDesign.Placeholders.Concat(BackDesign.Placeholders)
+                         .Where(p => p.Kind == DesignPlaceholder.PlaceholderKind.Image))
             {
                 placeholder.BoundColumn = Photos.HasPhotos ? Photos.MatchColumnName : null;
             }
@@ -435,8 +597,6 @@ namespace IDStack.ViewModels.DataImport
 
         private void RebuildPreview()
         {
-            // Build a DataTable so the DataGrid generates one column per Excel header
-            // (binding directly to DataRow would only show RowNumber + Values).
             var table = new System.Data.DataTable();
             if (Excel.Data != null)
             {
@@ -457,8 +617,8 @@ namespace IDStack.ViewModels.DataImport
         private void UpdateStatus()
         {
             var parts = new List<string>();
-            parts.Add(HasDesign
-                ? Placeholders.Count + " placeholders detected"
+            parts.Add(HasAnyDesign
+                ? (FrontDesign.PlaceholderCount + BackDesign.PlaceholderCount) + " placeholders detected"
                 : "no design");
             parts.Add(Excel.HasData
                 ? Excel.Data.RowCount + " rows"

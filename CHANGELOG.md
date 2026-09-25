@@ -3,6 +3,28 @@
 All notable changes to **ID Stack** — the ID Card Design & Batch Printing Software by Prabir kumar Das — are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.2] — PSD Import Fixed, Dark Theme (2026-09-25)
+
+### Fixed
+
+**PSD import works in both the Template Editor and Data Import** (previously every import produced an empty design):
+
+- **Visibility-flag workaround** — PsdSharp 1.0.2 mis-parses the PSD layer visibility flags and reports `IsVisible=False` for *every* layer, so the importer's `Where(l => l.IsVisible)` filter silently dropped all text layers. The importer no longer trusts that property and imports every layer carrying usable pixel data
+- **Per-layer composite fallback** — PSDs saved as CMYK + Zip crash PsdSharp's merged-composite decoder (`IndexOutOfRangeException` in `DeltaDecode`). `RenderCompositeBackground` now tries the merged composite first and, on failure, flattens the design from per-layer pixel data (bottom-up, honoring layer opacity), which decodes reliably — verified on the sample PSD (7 layers composited, 5 text layers detected)
+- **Editor canvas refresh** — `ApplyLoadedTemplate` swaps the whole `Template` object, but the canvas only re-hooks element collections on a `CurrentSide` change notification; the side (Front) was unchanged so the canvas kept showing the previous empty side. `ApplyLoadedTemplate` now raises `CurrentSide`/`Elements` change notifications explicitly after any file/PSD load
+- **Data Import dialogs dead after navigation** — the view subscribed to the view model's `ExcelFilePicked`/`PhotoFolderPicked` events only in `DataContextChanged`, which never fires when the singleton view model is assigned before the view's constructor; `Unloaded` also detached handlers that were never re-attached when navigating back. The view now subscribes at construction, re-subscribes on `Loaded`, and cleans up on `Unloaded` — Excel and photo browsing load reliably on every visit
+- **Stray "Ready" text floating mid-window** — the main-window status bar was docked *after* the filled page content in the same `DockPanel`, pushing it into the content area; it now docks before the content and sits properly at the bottom
+- **Sample PSD restored** — `tools/sample-data/demopsd.psd` had been truncated to 4 KB (importers reported "PSD file is corrupt"); restored to the full 2.9 MB file
+
+### Changed
+
+- **Dark theme** — the entire shell (background, surfaces, borders, sidebar, menus, status bar, buttons, text boxes) now uses a dark slate palette; the **editor canvas artboard stays white** (`TemplateSide.BackgroundColor` remains `#FFFFFF` and the dark surround/rulers frame it), and the data-preview grid keeps its light background for readability
+- UI-test scripts (`run-dataimport-ui-test.ps1`, diag scripts) prefer UIA `InvokePattern` over synthetic mouse clicks — window-activation was swallowing first-clicks and leaving imports untriggered; editor gains an `IDSTACK_AUTO_OPEN` dialog bypass hook for test automation
+
+### Tests
+
+- **128 unit tests, all passing**; 16-step end-to-end Data Import UI test passes with verified dark-theme screenshots; PSD verified in the editor (6 layers incl. 5 text elements) and in Data Import (5 placeholders + rendered preview)
+
 ## [0.3.1] — Phase 3 Redesign: Design-Driven Data Import (2026-09-24)
 
 Complete rebuild of the Data Import flow around the real user workflow: the design is the source of truth, placeholders are detected from it, and everything is mapped before processing.

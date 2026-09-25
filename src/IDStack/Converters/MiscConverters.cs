@@ -36,4 +36,20 @@ namespace IDStack.Converters
             throw new NotSupportedException();
         }
     }
+
+    /// <summary>Visible when the bound value is false (inverse of BoolToVisibility).</summary>
+    public class InverseBoolToVisibilityConverter : IValueConverter
+    {
+        /// <inheritdoc />
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return value is true ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        /// <inheritdoc />
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
 }
